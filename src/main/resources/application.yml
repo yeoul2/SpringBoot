@@ -1,13 +1,21 @@
 server:
   port: 7007
 
+spring:
+  output:
+    ansi:
+      enabled: always # 콘솔 로그 색상 활성화
+
+  thymeleaf:
+    prefix: classpath:/templates/ # Thymeleaf 템플릿 경로 설정
+    suffix: .html # HTML 파일 확장자 설정
+    cache: false # 개발 중 변경 사항 즉시 반영
 logging:
   pattern:
     console:  "${LOGPATTERN_CONSOLE:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}:%line)-%msg%n}"
   level:
     org.springframework.security: TRACE
 
-spring:
   datasource:
     hikari:
       jdbc-url: jdbc:mysql://localhost:3306/trip_db?serverTimezone=Asia/Seoul
