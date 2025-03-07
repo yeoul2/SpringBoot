@@ -31,6 +31,10 @@ dependencies {
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.mysql:mysql-connector-j'
+	implementation 'com.zaxxer:HikariCP:5.1.0' // HikariCP 추가
+	implementation 'mysql:mysql-connector-java:8.0.33' // MySQL 드라이버 추가
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4' // MyBatis 추가
+	implementation 'com.google.code.gson:gson:2.9.1' // gson추가
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'

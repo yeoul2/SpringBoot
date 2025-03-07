@@ -11,6 +11,23 @@ spring:
     suffix: .html # HTML 파일 확장자 설정
     cache: false # 개발 중 변경 사항 즉시 반영
 
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      jdbc-url: jdbc:mysql://localhost:3306/tripdb?serverTimezone=UTC&characterEncoding=UTF-8
+      username: root
+      password: abcd1234
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      pool-name: HikariCP
+  mybatis:
+    mapper-locations: classpath:mapper/*.xml
+    configuration:
+      map-underscore-to-camel-case: true
+
 logging:
   pattern:
     console: "${LOGPATTERN_CONSOLE:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}:%line)-%msg%n}"
