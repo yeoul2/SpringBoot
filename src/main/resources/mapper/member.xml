@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mybatis.mapper.MemberMapper">
+
+    <!-- 사용자 아이디(user_id)로 찾기 -->
+    <select id="findByUsername" parameterType="string" resultType="com.example.back.model.User">
+        SELECT user_no, user_name, user_email, user_id, user_pw, user_birth, role
+        FROM users
+        WHERE user_id = #{value}
+    </select>
+
+    <!-- 회원가입 (SignupRequest 사용) -->
+    <insert id="userInsert" parameterType="com.example.back.model.SignupRequest" useGeneratedKeys="true" keyProperty="user_no">
+    INSERT INTO users (user_name, user_email, user_id, user_pw, user_birth, role)
+    <!-- VALUES (#{name}, #{email}, #{id}, #{pw}, #{birth}, #{role}) -->
+    VALUES (#{user_name}, #{user_email}, #{user_id}, #{user_pw}, #{user_birth}, #{role})
+    </insert>
+</mapper>
