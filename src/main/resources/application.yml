@@ -1,5 +1,5 @@
 server:
-  port: 7007 # 서버 포트 변경
+  port: 7007
 
 spring:
   output:
@@ -7,29 +7,33 @@ spring:
       enabled: always # 콘솔 로그 색상 활성화
 
   thymeleaf:
-    prefix: classpath:/templates/ # Thymeleaf 템플릿 경로 설정
-    suffix: .html # HTML 파일 확장자 설정
-    cache: false # 개발 중 변경 사항 즉시 반영
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      jdbc-url: jdbc:mysql://localhost:3306/tripdb?serverTimezone=UTC&characterEncoding=UTF-8
+      jdbc-url: jdbc:mysql://localhost:3306/trip_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
       username: root
       password: abcd1234
-      maximum-pool-size: 10
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      connection-timeout: 20000
+      validation-timeout: 3000
       minimum-idle: 2
-      idle-timeout: 30000
+      maximum-pool-size: 10
+      idle-timeout: 600000
       max-lifetime: 1800000
-      connection-timeout: 30000
+      auto-commit: true
       pool-name: HikariCP
-  mybatis:
-    mapper-locations: classpath:mapper/*.xml
-    configuration:
-      map-underscore-to-camel-case: true
 
 logging:
   pattern:
     console: "${LOGPATTERN_CONSOLE:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}:%line)-%msg%n}"
   level:
-    org.springframework.security: "${SPRING_SECURITY_LOG_LEVEL:TRACE}" # Spring Security 로그 레벨 (TRACE)
+    org.springframework.security: TRACE
+
+mybatis:
+  mapper-locations: classpath:/mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
