@@ -27,13 +27,13 @@ public class TripBoardService {
       log.info("tripboardDetail 호출 성공");
       List<Map<String, Object>> list = null;
       list = tripBoardDao.tripboardDetial(tmap);
-/*      // 댓글 가져오기
+      // 댓글 가져오기
       List<Map<String, Object>> commList = tripBoardDao.commentList(tmap);
       if(commList != null && commList.size() > 0) {
          Map<String,Object> cmap = new HashMap<>();
          cmap.put("comments", commList);
          list.add(1, cmap);
-      }*/
+      }
       return list;
    }
 
@@ -58,4 +58,23 @@ public class TripBoardService {
       return result;
    }
 
+   /* 댓글 구현 */
+
+   public int commentInsert(Map<String, Object> tmap) {
+      int result = -1;
+      result = tripBoardDao.commentInsert(tmap);
+      return result;
+   }
+
+   public int commentUpdate(Map<String, Object> tmap) {
+      int result = -1;
+      result = tripBoardDao.commentUpdate(tmap);
+      return result;
+   }
+
+   public int commentDelete(int tbc_no) {
+      int result = -1;
+      result = tripBoardDao.commentDelete(tbc_no);
+      return result;
+   }
 }

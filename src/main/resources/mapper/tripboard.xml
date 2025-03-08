@@ -94,5 +94,70 @@
     </delete>
 
 
+    <!--=========================[[ 댓글 처리 SQL ]] ========================-->
+
+    <!--댓글 조회// 대댓글이 원본 댓글 밑에 뜨도록 재정렬 -->
+    <select id="commentList" resultType="map">
+        WITH RECURSIVE CommentHierarchy AS (
+            /*부모 댓글 (최상위 댓글)*/
+            SELECT
+                tbc_no,
+                tbc_comment,
+                DATE_FORMAT(tbc_date, '%Y-%m-%d %H:%i:%s') AS formatted_tbc_date   /*날짜 포맷 지정*/,
+                user_id,
+                parent_tbc_no,
+                tb_no,
+                tbc_no AS root_no,  /*부모 댓글의 tbc_no를 root_no로 설정*/
+                0 AS depth           /*depth 0은 부모 댓글*/
+            FROM trip_board_comment
+            WHERE parent_tbc_no IS NULL AND tb_no = #{tb_no} -- 특정 게시글의 부모 댓글만 가져오기
+
+            UNION ALL
+
+            /*대댓글 (자식 댓글)*/
+            SELECT
+                c.tbc_no,
+                c.tbc_comment,
+                DATE_FORMAT(c.tbc_date, '%Y-%m-%d %H:%i:%s') AS formatted_tbc_date  ,
+                c.user_id,
+                c.parent_tbc_no,
+                c.tb_no,
+                h.root_no,   /*부모 댓글의 root_no 유지*/
+                h.depth + 1  /*깊이 증가 (들여쓰기 효과)*/
+            FROM trip_board_comment c
+                     JOIN CommentHierarchy h ON c.parent_tbc_no = h.tbc_no
+        )
+
+        SELECT *
+        FROM CommentHierarchy
+        ORDER BY root_no ASC, depth ASC, tbc_no ASC;
+    </select>
+
+    <!--댓글 등록-->
+    <insert id="commentInsert" parameterType="map">
+        INSERT into trip_board_comment(tbc_comment, user_id, tb_no
+        <if test="parent_tbc_no != null"> ,parent_tbc_no</if>
+        )
+        VALUES( #{tbc_comment}, #{user_id}, #{tb_no}
+        <if test="parent_tbc_no != null"> ,#{parent_tbc_no} </if>
+        )
+    </insert>
+
+    <!--댓글 수정-->
+    <update id="commentUpdate" parameterType="map">
+        UPDATE trip_board_comment
+        SET tbc_comment = #{tbc_comment}
+        ,tbc_date = NOW()
+        <if test="parent_tbc_no != null"> ,parent_tbc_no = #{parent_tbc_no} </if>
+        WHERE tbc_no = #{tbc_no}
+    </update>
+
+    <!--댓글 삭제-->
+    <delete id="commentDelete" parameterType="int">
+        DELETE FROM trip_board_comment
+        WHERE tbc_no = #{value}
+    </delete>
+
+
 
 </mapper>

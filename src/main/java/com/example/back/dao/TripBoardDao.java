@@ -52,4 +52,35 @@ public class TripBoardDao {
       result = sqlSessionTemplate.delete("tripboardDelete", tb_no);
       return result;
    }
+
+
+   /* 댓글 구현 */
+
+   public List<Map<String, Object>> commentList(Map<String, Object> tmap) {
+      log.info("commentList호출 성공");
+      List<Map<String, Object>> commentList = null;
+      commentList = sqlSessionTemplate.selectList("commentList", tmap);
+      return commentList;
+   }
+
+   public int commentInsert(Map<String, Object> tmap) {
+      log.info("commentInsert 호출 성공");
+      int result = -1;
+      result = sqlSessionTemplate.insert("commentInsert", tmap);
+      return result;
+   }
+
+   public int commentUpdate(Map<String, Object> tmap) {
+      log.info("commentUpdate호출 성공");
+      int result = -1;
+      result = sqlSessionTemplate.update("commentUpdate", tmap);
+      return result;
+   }
+
+   public int commentDelete(int tbc_no) {
+      log.info("commentDelete호출 성공");
+      int result = -1;
+      result = sqlSessionTemplate.delete("commentDelete", tbc_no);
+      return result;
+   }
 }
