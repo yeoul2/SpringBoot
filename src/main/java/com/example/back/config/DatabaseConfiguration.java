@@ -1,4 +1,4 @@
-package com.example.back;
+package com.example.back.config;
 
 import javax.sql.DataSource;
 
@@ -19,9 +19,8 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
 // HokaroCP 이용해서 mySQL연결
-@Configuration
-@MapperScan(basePackages = "com.example.back.dao") // ✅ MyBatis 매퍼가 있는 패키지 설정
-@PropertySource("classpath:/application.yml")
+@Configuration // Spring Boot가 이 클래스를 설정파일로 인식
+@PropertySource("classpath:/application.yml") // yml 파일을 불러와서 적용
 public class DatabaseConfiguration {
 
     private static final Logger logger = LogManager.getLogger(DatabaseConfiguration.class);
@@ -44,8 +43,6 @@ public class DatabaseConfiguration {
         return dataSource;
     }
 
-    // @Autowired
-    // private ApplicationContext applicationContext;
 
     @Bean
     public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
@@ -56,10 +53,10 @@ public class DatabaseConfiguration {
         return sqlSessionFactoryBean.getObject();
     }
 
-    // @Bean
-    // public SqlSessionTemplate sqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
-    //     return new SqlSessionTemplate(sqlSessionFactory);
-    // }
+    @Bean
+    public SqlSessionTemplate sqlSessionTemplate(SqlSessionFactory sqlSessionFactory) {
+        return new SqlSessionTemplate(sqlSessionFactory);
+    }
 
     @Bean
     public SqlSession sqlSession(SqlSessionFactory sqlSessionFactory) {
