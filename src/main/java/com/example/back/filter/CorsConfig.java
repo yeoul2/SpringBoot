@@ -13,9 +13,9 @@ public class CorsConfig {
     public CorsFilter corsFilter(){
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedHeader("*"); //모든 header에 응답을 허용
-        config.addAllowedOrigin("http://localhost:6006/");//ip에 응답을 허용함
-        config.addAllowedMethod("*");//모든 POST, GET, PUT, DELETE Rest API 허락할께
+        config.addAllowedHeader("*");
+        config.addAllowedOrigin("http://localhost:6006/");
+        config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }

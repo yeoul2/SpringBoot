@@ -33,7 +33,6 @@ public class AuthenticationService {
         log.info("signin");
         //UsernamePasswordAuthenticationToken을 생성하여 사용자 이름과 비번을 전달함.
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken
-        /* (signinRequest.getId(), signinRequest.getPw())); */
         (signinRequest.getUser_id(), signinRequest.getUser_pw()));
         //인증이 성공하면 Dao를 통해 해당 사용자 정보를 데이터 베이스에서 조회함.
         //이 때 만일 사용자가 존재하지 않으면 IllegalArgumentException발생함. 
@@ -56,13 +55,11 @@ public class AuthenticationService {
         jwtAuthenticationResponse.setUser_no(user_no);
         jwtAuthenticationResponse.setUser_email(user_email);
         jwtAuthenticationResponse.setUser_name(user_name);
-        /* jwtAuthenticationResponse.setId(username); */
         jwtAuthenticationResponse.setUser_birth(user_birth);
+        jwtAuthenticationResponse.setUser_id(user_id);
         return jwtAuthenticationResponse;
     }
-
     public JwtAuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
-
         log.info("refresh 호출");
         log.info(refreshTokenRequest);
         String userID = jwtService.extractUserName(refreshTokenRequest.getToken());

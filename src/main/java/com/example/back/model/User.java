@@ -8,8 +8,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+
 
 //스프링 시큐리티에서는 일반 클래스는 담을 수가 없다.
 //반드시 UserDetails타입만 담을 수 있다.
@@ -60,14 +59,6 @@ public class User implements UserDetails {
 	public String getUsername() {
 		return user_id;
 	}
-    /* @Override
-    public String getPassword() {
-        return pw;
-    }
-    @Override
-    public String getUsername() {
-        return id;
-    } */
     
 }
 
