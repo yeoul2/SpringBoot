@@ -4,7 +4,7 @@
 <mapper namespace="com.example.back.dao.TripBoardDao">
     <!-- 게시글 조회 (공개된 게시글만) -->
     <select id="tripboardList" resultType="map">
-        SELECT tb_photo1, tb_title, tb_star, tb_likes
+        SELECT tb_photo1, tb_title, tb_star, tb_like_count
         FROM trip_board
         WHERE tb_public = 'Y'
         <!-- 검색 기능 -->
@@ -32,7 +32,7 @@
         ORDER BY
         CASE
         WHEN #{order} = '최신순' THEN tb_no
-        WHEN #{order} = '인기순' THEN tb_likes
+        WHEN #{order} = '인기순' THEN tb_like_count
         WHEN #{order} = '만족도순' THEN tb_star
         ELSE tb_no -- 기본 정렬 기준 설정
         END DESC
@@ -40,31 +40,37 @@
 
     <!-- 특정 번호의 게시글 조회 -->
     <select id="tripboardDetial" resultType="map">
-        SELECT tb_title, user_id, tb_place, tb_date, tb_date2, tb_review,
-               tb_photo1, tb_photo2, tb_photo3, tb_star, tb_likes
+        SELECT tb_title, user_id, tb_country,tb_city, tb_departure_date, tb_return_date, tb_review,
+                tb_photo1, tb_photo2, tb_photo3, tb_star, tb_like_count, tb_participants,tb_theme
         FROM trip_board
         WHERE tb_no = #{tb_no}
     </select>
 
     <!-- 게시글 추가 -->
-    <insert id="tripboardInsert" parameterType="com.example.back.model.TripBoard">
+    <insert id="tripboardInsert" parameterType="com.example.back.model.TripBoard" useGeneratedKeys="true" keyProperty="tb_no">
         INSERT INTO trip_board
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            user_id, tb_title, tb_place, tb_star, tb_review, tb_public
-            <if test="tb_date != null"> ,tb_date </if>
-            <if test="tb_date2 != null"> ,tb_date2 </if>
+            user_id, tb_title, tb_country, tb_star, tb_review, tb_public
+            <if test="tb_departure_date != null"> ,tb_departure_date </if>
+            <if test="tb_return_date != null"> ,tb_return_date </if>
+            <if test="tb_city != null"> ,tb_city </if>
             <if test="tb_photo1 != null"> ,tb_photo1 </if>
             <if test="tb_photo2 != null"> ,tb_photo2 </if>
             <if test="tb_photo3 != null"> ,tb_photo3 </if>
+            <if test="tb_participants != null"> ,tb_participants </if>
+            <if test="tb_theme != null"> ,tb_theme </if>
         </trim>
         VALUES
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            #{user_id},#{tb_title}, #{tb_place}, #{tb_star}, #{tb_review}, #{tb_public}
-            <if test="tb_date != null"> ,#{tb_date} </if>
-            <if test="tb_date2 != null"> ,#{tb_date2} </if>
+            #{user_id},#{tb_title}, #{tb_country}, #{tb_star}, #{tb_review}, #{tb_public}
+            <if test="tb_departure_date != null"> ,#{tb_departure_date} </if>
+            <if test="tb_return_date != null"> ,#{tb_return_date} </if>
+            <if test="tb_city != null"> ,#{tb_city} </if>
             <if test="tb_photo1 != null"> ,#{tb_photo1} </if>
             <if test="tb_photo2 != null"> ,#{tb_photo2} </if>
             <if test="tb_photo3 != null"> ,#{tb_photo3} </if>
+            <if test="tb_participants != null"> ,#{tb_participants} </if>
+            <if test="tb_theme != null"> ,#{tb_theme} </if>
         </trim>
     </insert>
 
@@ -73,16 +79,18 @@
         UPDATE trip_board
         <set>
             tb_title = #{tb_title},
-            tb_place = #{tb_place},
+            tb_country = #{tb_country},
             tb_star = #{tb_star},
-            tb_likes = #{tb_likes},
             tb_review = #{tb_review},
             tb_public = #{tb_public}
-            <if test="tb_date != null"> ,tb_date = #{tb_date} </if>
-            <if test="tb_date2 != null"> ,tb_date2 = #{tb_date2} </if>
+            <if test="tb_departure_date != null"> ,tb_departure_date = #{tb_departure_date} </if>
+            <if test="tb_return_date != null"> ,tb_return_date = #{tb_return_date} </if>
+            <if test="tb_city != null"> ,tb_city = #{tb_city} </if>
             <if test="tb_photo1 != null"> ,tb_photo1 = #{tb_photo1} </if>
             <if test="tb_photo2 != null"> ,tb_photo2 = #{tb_photo2} </if>
             <if test="tb_photo3 != null"> ,tb_photo3 = #{tb_photo3} </if>
+            <if test="tb_participants != null"> ,tb_participants = #{tb_participants} </if>
+            <if test="tb_theme != null"> ,tb_theme = #{tb_theme} </if>
         </set>
         WHERE tb_no = #{tb_no}
     </update>
@@ -92,7 +100,6 @@
         DELETE FROM trip_board
         WHERE tb_no = #{tb_no}
     </delete>
-
 
     <!--=========================[[ 댓글 처리 SQL ]] ========================-->
 
@@ -125,7 +132,7 @@
                 h.root_no,   /*부모 댓글의 root_no 유지*/
                 h.depth + 1  /*깊이 증가 (들여쓰기 효과)*/
             FROM trip_board_comment c
-                     JOIN CommentHierarchy h ON c.parent_tbc_no = h.tbc_no
+                    JOIN CommentHierarchy h ON c.parent_tbc_no = h.tbc_no
         )
 
         SELECT *
@@ -158,6 +165,65 @@
         WHERE tbc_no = #{value}
     </delete>
 
+    <!--=========================[[ 좋아요 처리 SQL ]] ========================-->
+    <!-- 유저가 해당 게시글에 좋아요를 눌렀는지 확인 -->
+    <select id="hasLiked" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM likes WHERE user_id = #{user_id} AND tb_no = #{tb_no};
+    </select>
 
+    <!-- 게시글 좋아요 증가 -->
+    <update id="likeAddboard" parameterType="int">
+        UPDATE trip_board
+        SET tb_like_count = tb_like_count + 1
+        WHERE tb_no = #{tb_no}
+    </update>
+    <!-- 좋아요 추가 -->
+    <insert id="addLike" parameterType="map">
+        INSERT INTO likes (user_id, tb_no)
+        VALUES (#{user_id}, #{tb_no});
+    </insert>
 
+    <!-- 게시글 좋아요 취소(감소) -->
+    <update id="disLikeboard" parameterType="map">
+        UPDATE trip_board
+        SET tb_like_count = tb_like_count - 1
+        WHERE tb_no = #{tb_no}
+    </update>
+    <!-- 좋아요 취소 -->
+    <delete id="disLike" parameterType="map">
+        DELETE FROM likes WHERE user_id = #{user_id} AND tb_no = #{tb_no};
+    </delete>
+
+    <!--=========================[[ 보드디테일(코스) 처리 SQL ]] ========================-->
+    <!-- 코스 조회(board_detail) -->
+    <select id ="tripboardDetailList" parameterType="map">
+        SELECT tbd_time,tbd_place_type,tbd_place,tbd_content,tbd_time_car,tbd_time_public,tbd_day
+        FROM trip_board_detail
+        WHERE tb_no = #{tb_no}
+        ORDER BY tbd_no;
+    </select>
+    <!-- 여행 상세 코스 추가 -->
+    <insert id="tripboardDetailInsert" parameterType="map">
+        INSERT INTO trip_board_detail 
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+        tb_no, tbd_place, tbd_day
+        <if test="tbd_time != null"> ,tbd_time </if>
+        <if test="tbd_content != null"> ,tbd_content </if>
+        <if test="tbd_place_type != null"> ,tbd_place_type </if>
+        <if test="tbd_time_car != null"> ,tbd_time_car </if>
+        <if test="tbd_time_public != null"> ,tbd_time_public </if>
+        </trim>
+        VALUES 
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+        #{tb_no}, #{tbd_place}, #{tbd_day}
+        <if test="tbd_time != null"> ,#{tbd_time} </if>
+        <if test="tbd_content != null"> ,#{tbd_content} </if>
+        <if test="tbd_place_type != null"> ,#{tbd_place_type} </if>
+        <if test="tbd_time_car != null"> ,#{tbd_time_car} </if>
+        <if test="tbd_time_public != null"> ,#{tbd_time_public} </if>
+        </trim>
+    </insert>
+    <delete id="tripboardDetailDelete" parameterType="int">
+    DELETE FROM trip_board_detail WHERE tb_no = #{tb_no}
+    </delete>
 </mapper>
