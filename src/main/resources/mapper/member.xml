@@ -12,10 +12,22 @@
         WHERE user_id = #{user_id}
     </select>
 
+    <!-- 사용자 이메일(user_email)로 찾기  구글계정 or 네이버 계정을 위해 추가함 --> 
+    <select id="findByEmail" parameterType="java.lang.String" resultType="com.example.back.model.User">
+        SELECT user_no, user_name, user_email, user_id, user_pw, user_birth, role
+        FROM users
+        WHERE user_email = #{email}
+    </select>
+
+
     <!-- 회원가입 (SignupRequest 사용) -->
-    <insert id="userInsert" parameterType="com.example.back.model.SignupRequest" useGeneratedKeys="true" keyProperty="user_no">
+    <insert id="userInsert" parameterType="com.example.back.model.SignupRequest">
     INSERT INTO users (user_name, user_email, user_id, user_pw, user_birth, role)
-    <!-- VALUES (#{name}, #{email}, #{id}, #{pw}, #{birth}, #{role}) -->
-    VALUES (#{user_name}, #{user_email}, #{user_id}, #{user_pw}, #{user_birth}, #{role})
+    VALUES (#{user_name}, #{user_email}, #{user_id}, #{user_pw}, 
+    <!-- 해당 값이 null일경우 null추가, 아니면 값을 추가 구글의 경우 생년월일 값을 가져오지 못하므로 null 표시 -->
+            <if test="user_birth != null">#{user_birth}</if> 
+            <if test="user_birth == null">NULL</if>,
+            #{role})
     </insert>
+
 </mapper>
