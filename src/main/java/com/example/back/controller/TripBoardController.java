@@ -2,11 +2,14 @@ package com.example.back.controller;
 
 import com.example.back.model.TripBoard;
 import com.example.back.service.TripBoardService;
+import com.example.back.utils.LocalDateTimeAdapter;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -17,14 +20,30 @@ public class TripBoardController {
    @Autowired
    private TripBoardService tripBoardService;
 
-   // 후기 조회 (전체) 이후에 페이징 처리 필요함
+   // Gson에 LocalDateTime 처리 추가
+   private Gson gson = new GsonBuilder()
+           .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter()) // LocalDateTime을 처리하는 TypeAdapter 등록
+           .create();
+
+   //후기 게시글 갯수 조회
+   @GetMapping("tripboardCount")
+   public int tripBoardCount(@RequestParam Map<String, Object> tmap) {
+      log.info("tripBoardCount 호출 성공");
+      int result = -1;
+      result = tripBoardService.tripboardCount(tmap);
+      return result;
+   }
+
+
+   // 후기 조회 (전체)
    @GetMapping("tripboardList")
    public String tripboardList(@RequestParam Map<String, Object> tmap) {
       log.info("tripboardList 호출 성공");
+      log.info(tmap);
       List<Map<String, Object>> list = null;
       list = tripBoardService.tripboardList(tmap);
       Gson g = new Gson();
-      String temp = g.toJson(list);
+      String temp = gson.toJson(list);
       return temp;
    }
 

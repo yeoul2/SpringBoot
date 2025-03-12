@@ -20,9 +20,22 @@ public class TripBoardService {
    private TripBoardDao tripBoardDao;
 
    /* 게시판 구현 */
+
+   // 게시판 갯수 조회
+   public int tripboardCount(Map<String, Object> tmap) {
+      log.info("tripboardCount 호출 성공");
+      int result = -1;
+      result = tripBoardDao.tripboardCount(tmap);
+      return result;
+   }
    // 게시판 조회
    public List<Map<String, Object>> tripboardList(Map<String, Object> tmap) {
       log.info("tripboardList 호출 성공");
+
+      // 페이지 정보 계산
+      int page = Integer.parseInt(tmap.getOrDefault("page", "1").toString());
+      int offset = (page-1) * 8;
+      tmap.put("offset", offset);  // 쿼리에 사용할 offset 추가
       List<Map<String, Object>> list = null;
       list = tripBoardDao.tripboardList(tmap);
       return list;

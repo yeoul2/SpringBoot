@@ -15,6 +15,13 @@ public class TripBoardDao {
    @Autowired
    private SqlSessionTemplate sqlSessionTemplate;
 
+   public int tripboardCount(Map<String, Object> tmap) {
+      log.info("tripboardCount 호출 성공");
+      int result = -1;
+      result = sqlSessionTemplate.selectOne("tripboardCount", tmap);
+      return result;
+   }
+
    public List<Map<String, Object>> tripboardList(Map<String, Object> tmap) {
       log.info("tripboardList 호출 성공");
       List<Map<String, Object>> list = null;
@@ -137,6 +144,9 @@ public class TripBoardDao {
    /* 코스 삭제 (보드 디테일) */
    public int tripboardDetailDelete(int tb_no) {
       log.info("tripboardDetailDelete 호출 성공");
-      return sqlSessionTemplate.delete("tripboardDetailDelete", tb_no);
+      int result = -1;
+      result = sqlSessionTemplate.delete("tripboardDetailDelete", tb_no);
+      return result;
    }
+
 }
