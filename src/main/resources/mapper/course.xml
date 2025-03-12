@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.back.dao.CourseDao">
+
+   <!-- ✅ 전체 코스 조회 (상세 정보 포함) -->
+   <select id="getCourseList" resultType="com.example.back.model.Course">
+      SELECT c.*, d.cdt_no, d.cdt_place, d.cdt_place_type, d.cdt_time_car, d.cdt_time_public
+      FROM course c
+      LEFT JOIN cs_detail d ON c.cs_no = d.cs_no
+   </select>
+
+   <!-- ✅ 특정 코스 조회 (상세 정보 포함) -->
+   <select id="findCourseById" parameterType="int" resultType="com.example.back.model.Course">
+      SELECT c.*, d.cdt_no, d.cdt_place, d.cdt_place_type, d.cdt_time_car, d.cdt_time_public
+      FROM course c
+      LEFT JOIN cs_detail d ON c.cs_no = d.cs_no
+      WHERE c.cs_no = #{cs_no}
+   </select>
+
+   <!-- ✅ 코스 저장 -->
+   <insert id="insertCourse" parameterType="com.example.back.model.Course" useGeneratedKeys="true" keyProperty="cs_no">
+      INSERT INTO course (user_id, cs_name, cs_country, cs_city, cs_departure_date, cs_return_date, cs_people_num, cs_theme, cs_like_count)
+      VALUES (#{user_id}, #{cs_name}, #{cs_country}, #{cs_city}, #{cs_departure_date}, #{cs_return_date}, #{cs_people_num}, #{cs_theme}, #{cs_like_count})
+   </insert>
+
+   <!-- ✅ 코스 상세 저장 (기존 cs_detail.xml의 내용 포함) -->
+   <insert id="insertCourseDetail" parameterType="com.example.back.model.CourseDetail">
+      INSERT INTO cs_detail (cs_no, cdt_place, cdt_place_type, cdt_time_car, cdt_time_public)
+      VALUES (#{cs_no}, #{cdt_place}, #{cdt_place_type}, #{cdt_time_car}, #{cdt_time_public})
+   </insert>
+
+   <!-- ✅ 코스 수정 -->
+   <update id="updateCourse" parameterType="com.example.back.model.Course">
+      UPDATE course
+      SET cs_name = #{cs_name}, cs_country = #{cs_country}, cs_city = #{cs_city},
+         cs_departure_date = #{cs_departure_date}, cs_return_date = #{cs_return_date},
+         cs_people_num = #{cs_people_num}, cs_theme = #{cs_theme}, cs_like_count = #{cs_like_count}
+      WHERE cs_no = #{cs_no}
+   </update>
+
+   <!-- ✅ 코스 상세 수정 -->
+   <update id="updateCourseDetail" parameterType="com.example.back.model.CourseDetail">
+      UPDATE cs_detail
+      SET cdt_place = #{cdt_place}, cdt_place_type = #{cdt_place_type}, cdt_time_car = #{cdt_time_car}, cdt_time_public = #{cdt_time_public}
+      WHERE cdt_no = #{cdt_no}
+   </update>
+
+   <!-- ✅ 코스 상세 삭제 -->
+   <delete id="deleteCourseDetails" parameterType="int">
+      DELETE FROM cs_detail WHERE cs_no = #{cs_no}
+   </delete>
+
+   <!-- ✅ 코스 삭제 (상세 정보도 함께 삭제) -->
+   <delete id="deleteCourse" parameterType="int">
+      DELETE FROM course WHERE cs_no = #{cs_no}
+   </delete>
+
+</mapper>
