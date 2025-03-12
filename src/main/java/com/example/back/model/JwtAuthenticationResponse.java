@@ -19,4 +19,20 @@ public class JwtAuthenticationResponse {
     private String user_email;//DB에서 조회된 값
     private String user_birth;//DB에서 조회된 값
     private String user_id;//DB에서 조회된 값
+
+    // ✅ 직접 생성자 추가 (모든 필드를 받는 생성자)
+    public JwtAuthenticationResponse(String accessToken, String refreshToken, String user_id, 
+                                    String user_email, String user_name, String user_birth, 
+                                    int user_no, Role role) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+        this.user_id = user_id;
+        this.user_email = user_email;
+        this.user_name = user_name;
+        this.user_birth = user_birth;
+        this.user_no = user_no;
+        this.role = role;
+    }
 }
+
+

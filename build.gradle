@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.3'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'application'
 }
 
 group = 'com.example'
@@ -24,12 +25,14 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-mail' // 메일
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4'
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 	implementation 'org.apache.commons:commons-lang3:3.14.0'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client' // 구글
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
@@ -51,4 +54,13 @@ tasks.named('test') {
 
 tasks.withType(JavaCompile) {
     options.compilerArgs += ['-parameters']
+}
+
+// Adding JVM arguments for "add-opens"
+application {
+	// Main class 설정
+	mainClass = 'com.example.back.BackApplication'
+
+	// Gradle에서 JVM 옵션 설정
+	applicationDefaultJvmArgs = ["--add-opens", "java.base/java.time=ALL-UNNAMED"]
 }
