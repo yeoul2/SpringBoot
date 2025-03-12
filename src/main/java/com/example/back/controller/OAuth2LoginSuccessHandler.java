@@ -5,7 +5,10 @@ import com.example.back.model.Role;
 import com.example.back.model.SignupRequest;
 import com.example.back.service.AuthenticationService;
 import lombok.extern.log4j.Log4j2;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -35,7 +38,6 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     /* 로그인한 사용자 정보 가져오기 */
     OAuth2User oauth2User = (OAuth2User) authentication.getPrincipal(); //로그인한 사용자 정보를 OAuth2User 객체로 가져옴
     String provider = request.getRequestURI().contains("naver") ? "naver" : "google"; // 제공자 구분
-
 
     /* OAuth2 사용자 정보 매핑(Google, Naver) */
     String user_email;
@@ -76,16 +78,21 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
     // 이미 가입된 사용자의 경우 createJwtForOAuthUser(user_email)를 호출하여 JWT를 발급
     try {
         JwtAuthenticationResponse jwtResponse = authenticationService.createJwtForOAuthUser(user_email);
-        // jwt를 json 형식으로 응답
+        log.info("✅ JWT 발급 완료 - Email: {}", user_email);
+
+        // ✅ 사용자 정보를 SecurityContext에 저장 (자동 로그인 가능하게 설정)
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                oauth2User, null, oauth2User.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+        log.info("✅ SecurityContext에 OAuth2 로그인 정보 저장 완료!");
+
+        // JWT 토큰을 JSON 응답으로 반환
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
         PrintWriter out = response.getWriter();
         out.print("{\"accessToken\": \"" + jwtResponse.getAccessToken() + "\", \"refreshToken\": \"" + jwtResponse.getRefreshToken() + "\"}");
         out.flush();
-
-        log.info("✅ JWT 발급 완료 - Email(user_email): {}", user_email);
-
         // 자동회원가입 (소셜 로그인 한에서)
     } catch (IllegalArgumentException e) {
         log.warn("❌ OAuth 사용자 정보 없음, 자동 회원가입 진행: {}", user_email);
@@ -95,11 +102,10 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         signupRequest.setUser_name(user_name);
         signupRequest.setUser_id(user_email);
         signupRequest.setUser_pw("OAUTH2_USER");
-        signupRequest.setUser_birth(null); // ✅ 기본값 설정
+        signupRequest.setUser_birth(null);
         signupRequest.setRole(Role.USER);
 
         authenticationService.signup(signupRequest);
-
         JwtAuthenticationResponse jwtResponse = authenticationService.createJwtForOAuthUser(user_email);
 
         response.setContentType("application/json");
@@ -109,7 +115,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         out.print("{\"accessToken\": \"" + jwtResponse.getAccessToken() + "\", \"refreshToken\": \"" + jwtResponse.getRefreshToken() + "\"}");
         out.flush();
 
-        log.info("✅ 자동 회원가입 완료 후 JWT 발급 - Email(user_email): {}", user_email);
+        log.info("✅ 자동 회원가입 후 JWT 발급 완료: {}", user_email);
         }
     }
 

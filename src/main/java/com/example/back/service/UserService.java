@@ -32,5 +32,10 @@ public class UserService {
     public User findByUsername(String userId) {
         return userDao.findByUsername(userId); // ✅ UserDao에서 데이터 조회
     }
+
+    // 아이디 중복 확인 메서드
+    public boolean isUsernameAvailable(String userId) {
+        return userDao.isUsernameAvailable(userId);
+    }
 }
 

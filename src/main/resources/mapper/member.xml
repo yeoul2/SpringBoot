@@ -19,6 +19,11 @@
         WHERE user_email = #{email}
     </select>
 
+    <!-- 아이디 중복 확인 (COUNT 사용) ✅ -->
+    <select id="countByUserId" parameterType="java.lang.String" resultType="int">
+        SELECT COUNT(*) FROM users WHERE user_id = #{user_id}
+    </select>
+
 
     <!-- 회원가입 (SignupRequest 사용) -->
     <insert id="userInsert" parameterType="com.example.back.model.SignupRequest">
@@ -29,5 +34,17 @@
             <if test="user_birth == null">NULL</if>,
             #{role})
     </insert>
+
+    <!-- 🔹 이메일 인증 코드 저장 (덮어쓰기) -->
+    <insert id="insertVerificationCode" parameterType="map">
+        INSERT INTO user_email_verification (user_email, code, expired)
+        VALUES (#{user_email}, #{code}, false)
+        ON DUPLICATE KEY UPDATE code = #{code}, expired = false, created_at = CURRENT_TIMESTAMP;
+    </insert>
+
+    <!-- 🔹 이메일 인증 코드 조회 -->
+    <select id="findVerificationCodeByEmail" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT code FROM user_email_verification WHERE user_email = #{user_email} AND expired = false;
+    </select>
 
 </mapper>
