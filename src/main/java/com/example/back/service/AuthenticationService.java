@@ -10,12 +10,15 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.Random;
 
 @Log4j2
 @Service //이 클래스가 Spring의 서비스 레이어 역할을 함 (Spring Bean으로 등록됨)
+@Repository
 public class AuthenticationService {
 
     private final UserDao userDao;
@@ -33,16 +36,13 @@ public class AuthenticationService {
 
     public JwtAuthenticationResponse signin(SigninRequest signinRequest) {
         log.info("🔑 로그인 시도: ID = {}", signinRequest.getUser_id());
-
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 signinRequest.getUser_id(), signinRequest.getUser_pw()));
-
         User user = userDao.findByUsername(signinRequest.getUser_id());
         if (user == null) {
             log.warn("❌ 로그인 실패: 사용자 ID={}를 찾을 수 없음", signinRequest.getUser_id());
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
         }
-
         String jwt = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
         log.info("✅ 로그인 성공: ID = {}, JWT 발급 완료", signinRequest.getUser_id());
@@ -52,13 +52,11 @@ public class AuthenticationService {
 
     public JwtAuthenticationResponse createJwtForOAuthUser(String user_email) {
         log.info("🔑 OAuth 로그인 시도: Email = {}", user_email);
-
         User user = userDao.findByEmail(user_email);
         if (user == null) {
             log.warn("❌ OAuth 로그인 실패: 이메일={}에 해당하는 사용자를 찾을 수 없음", user_email);
             throw new IllegalArgumentException("OAuth 로그인한 사용자를 찾을 수 없습니다.");
         }
-
         String jwt = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
         log.info("✅ OAuth 로그인 성공: Email = {}, JWT 발급 완료", user_email);
@@ -68,25 +66,31 @@ public class AuthenticationService {
 
     public JwtAuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
         log.info("🔄 토큰 갱신 시도");
-
         String userID = jwtService.extractUserName(refreshTokenRequest.getToken());
         User user = userDao.findByUsername(userID);
         if (user == null) {
             log.warn("❌ 토큰 갱신 실패: ID={}를 찾을 수 없음", userID);
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
         }
-
         if (jwtService.isTokenValid(refreshTokenRequest.getToken(), user)) {
             String jwt = jwtService.generateToken(user);
             String refreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
-
             log.info("✅ 토큰 갱신 완료: ID = {}", userID);
             return new JwtAuthenticationResponse(jwt, refreshToken, user.getUser_id(), user.getUser_email(),
                     user.getUser_name(), user.getUser_birth(), user.getUser_no(), user.getRole());
         }
-
         log.warn("❌ 토큰 갱신 실패: 유효하지 않은 Refresh Token");
         return null;
+    }
+
+    // 이메일
+    public boolean verifyEmailCode(String user_email, String code) { // user_email 유지
+        String storedCode = userDao.findVerificationCodeByEmail(user_email);
+        return storedCode != null && storedCode.equals(code);
+    }
+    // 🔹 새로운 인증 코드 생성
+    public String generateVerificationCode() {
+        return String.valueOf(new Random().nextInt(900000) + 100000); // 6자리 랜덤 숫자 생성
     }
 
     public int signup(SignupRequest signupRequest) {

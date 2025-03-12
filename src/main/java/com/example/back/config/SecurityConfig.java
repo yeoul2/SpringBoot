@@ -66,16 +66,15 @@ public class SecurityConfig {
         .addFilter(corsFilter) // cors 필터 추가
         .csrf(csrf -> csrf.disable()) // csrf 보안 비활성화 (jwt 이므로 필요가 없음)
         .authorizeHttpRequests(requests -> requests
-            .requestMatchers("/api/**").permitAll()
-            .requestMatchers("/oauth2/**").permitAll()
-            .requestMatchers("/login/oauth2/code/google").permitAll() // 구글 추가
-            .requestMatchers("/login/oauth2/code/naver").permitAll()  // 네이버 추가
-            .requestMatchers("/login/oauth2/code/kakao").permitAll()  // 카카오 추가
-            .requestMatchers("/error").permitAll()
-            .requestMatchers("/schedule/**").hasAnyAuthority(Role.ADMIN.name(), Role.USER.name())
-            .requestMatchers("/notice/**").hasAnyAuthority(Role.USER.name())
-            .requestMatchers("/admin/**").hasAnyAuthority(Role.ADMIN.name())
-            .anyRequest().authenticated())
+        .requestMatchers("/api/**").permitAll()
+        .requestMatchers("/api/login").permitAll()
+        .requestMatchers("/oauth2/**").permitAll()
+        .requestMatchers("/api/check").authenticated() // 🔥 인증된 사용자만 접근 가능
+        .requestMatchers("/login/oauth2/code/google").permitAll() // ✅ 구글 로그인 URL 허용
+        .requestMatchers("/login/oauth2/code/naver").permitAll()  // ✅ 네이버 로그인 URL 허용
+        .requestMatchers("/error").permitAll()
+        .anyRequest().authenticated())
+
 
         .formLogin(form -> form.disable())  // ✅ Security에서 기본 로그인 페이지 제공 제거
         .httpBasic(httpBasic -> httpBasic.disable()) // ✅ HTTP Basic 인증 제거

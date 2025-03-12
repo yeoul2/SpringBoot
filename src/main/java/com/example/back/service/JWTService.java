@@ -1,6 +1,5 @@
 package com.example.back.service;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -55,6 +54,8 @@ public class JWTService {
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
+
+    
 
     public String extractUserName(String token) {
         return extractClaim(token, Claims::getSubject);
