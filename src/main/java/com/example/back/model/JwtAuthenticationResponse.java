@@ -9,6 +9,7 @@ import lombok.Data;
 //리액트에서는 localStorage에 저장했다가 활용하기
 @Data
 public class JwtAuthenticationResponse {
+    //private String googleAccessToken;  // 🔥 추가: 구글에서 받은 액세스 토큰
     //JWTService에서 가져온 값 담음
     private String accessToken;//로그인 할 때 생성된 토큰
     //JWTService에서 가져온 값 담음
@@ -21,9 +22,10 @@ public class JwtAuthenticationResponse {
     private String user_id;//DB에서 조회된 값
 
     // ✅ 직접 생성자 추가 (모든 필드를 받는 생성자)
-    public JwtAuthenticationResponse(String accessToken, String refreshToken, String user_id, 
+    public JwtAuthenticationResponse( String accessToken, String refreshToken, String user_id, 
                                     String user_email, String user_name, String user_birth, 
                                     int user_no, Role role) {
+        //this.googleAccessToken = googleAccessToken; // ✅ 구글에서 받은 액세스 토큰 추가
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.user_id = user_id;
@@ -33,6 +35,13 @@ public class JwtAuthenticationResponse {
         this.user_no = user_no;
         this.role = role;
     }
+
+    // ✅ 2. 일반 로그인용 생성자 (googleAccessToken 없이 사용 가능)
+    /* public JwtAuthenticationResponse(String accessToken, String refreshToken, 
+                                    String user_id, String user_email, String user_name, 
+                                    String user_birth, int user_no, Role role) {
+        this(null, accessToken, refreshToken, user_id, user_email, user_name, user_birth, user_no, role);
+    } */
 }
 
 
