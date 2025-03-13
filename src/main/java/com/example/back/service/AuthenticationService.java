@@ -3,17 +3,30 @@ package com.example.back.service;
 import com.example.back.dao.UserDao;
 import com.example.back.model.JwtAuthenticationResponse;
 import com.example.back.model.RefreshTokenRequest;
+import com.example.back.model.Role;
 import com.example.back.model.SigninRequest;
 import com.example.back.model.SignupRequest;
 import com.example.back.model.User;
 import lombok.extern.log4j.Log4j2;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 @Log4j2
@@ -33,6 +46,104 @@ public class AuthenticationService {
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
     }
+
+
+    // 프론트에서 받은 googleAccessToken을 직접 사용해서 유저 정보를 가져옴
+    /* public JwtAuthenticationResponse authenticateWithGoogleToken(String googleAccessToken) {
+        RestTemplate restTemplate = new RestTemplate();
+        // Google 사용자 정보 요청
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(googleAccessToken);
+        HttpEntity<String> request = new HttpEntity<>(headers);
+        ResponseEntity<Map> response = restTemplate.exchange(
+            "https://www.googleapis.com/oauth2/v3/userinfo", HttpMethod.GET, request, Map.class
+        );
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new RuntimeException("Google 사용자 정보 요청 실패!");
+        }
+        Map<String, Object> userInfo = response.getBody();
+        String userEmail = (String) userInfo.get("email");
+        String userName = (String) userInfo.get("name");
+    
+        // DB 조회 후 JWT 생성
+        User user = userDao.findByEmail(userEmail);
+        if (user == null) {
+            throw new IllegalArgumentException("OAuth 로그인한 사용자를 찾을 수 없습니다.");
+        }
+    
+        // ✅ JWT 발급 (기존 시스템과 호환되도록)
+        String jwt = jwtService.generateToken(user);
+        String refreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
+    
+        // ✅ Google 로그인에서는 googleAccessToken 포함하여 응답
+        return new JwtAuthenticationResponse(jwt, refreshToken, 
+            user.getUser_id(), user.getUser_email(), user.getUser_name(),
+            user.getUser_birth(), user.getUser_no(), user.getRole());
+    } */
+
+/* 테스트 */
+
+/* public JwtAuthenticationResponse exchangeGoogleCodeForToken(String code) {
+    RestTemplate restTemplate = new RestTemplate();
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("client_id", "YOUR_GOOGLE_CLIENT_ID");
+    params.add("client_secret", "YOUR_GOOGLE_CLIENT_SECRET");
+    params.add("code", code);
+    params.add("redirect_uri", "http://localhost:7007/login/oauth2/code/google");
+    params.add("grant_type", "authorization_code");
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+    HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+
+    ResponseEntity<Map> response = restTemplate.postForEntity("https://oauth2.googleapis.com/token", request, Map.class);
+    if (!response.getStatusCode().is2xxSuccessful()) {
+        throw new RuntimeException("Google OAuth Token 요청 실패!");
+    }
+
+    Map<String, Object> responseBody = response.getBody();
+    String googleAccessToken = (String) responseBody.get("access_token"); // ✅ 구글에서 받은 액세스 토큰
+    String refreshToken = (String) responseBody.get("refresh_token");
+
+    // ✅ 구글 사용자 정보 가져오기
+    HttpHeaders userInfoHeaders = new HttpHeaders();
+    userInfoHeaders.setBearerAuth(googleAccessToken);
+    HttpEntity<String> userInfoRequest = new HttpEntity<>(userInfoHeaders);
+
+    ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
+        "https://www.googleapis.com/oauth2/v3/userinfo", HttpMethod.GET, userInfoRequest, Map.class
+    );
+
+    if (!userInfoResponse.getStatusCode().is2xxSuccessful()) {
+        throw new RuntimeException("Google 사용자 정보 요청 실패!");
+    }
+
+    Map<String, Object> userInfo = userInfoResponse.getBody();
+    String userEmail = (String) userInfo.get("email");
+    String userName = (String) userInfo.get("name");
+
+    // ✅ 데이터베이스에서 유저 정보 조회
+    User user = userDao.findByEmail(userEmail);
+    if (user == null) {
+        throw new IllegalArgumentException("OAuth 로그인한 사용자를 찾을 수 없습니다.");
+    }
+
+    // ✅ JWT 토큰 생성
+    String accessToken = jwtService.generateToken(user);
+    String ourRefreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
+
+    // ✅ 최종 응답 반환 (우리 JWT + 구글 액세스 토큰 포함)
+    return new JwtAuthenticationResponse(googleAccessToken, accessToken, ourRefreshToken, 
+        user.getUser_id(), user.getUser_email(), user.getUser_name(),
+        user.getUser_birth(), user.getUser_no(), user.getRole());
+}
+ */
+    /* 테스트 */
+
+    public boolean userExists(String user_email) {
+        return userDao.userExists(user_email);
+    }
+
 
     public JwtAuthenticationResponse signin(SigninRequest signinRequest) {
         log.info("🔑 로그인 시도: ID = {}", signinRequest.getUser_id());

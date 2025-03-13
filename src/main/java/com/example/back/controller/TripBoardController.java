@@ -23,7 +23,7 @@ public class TripBoardController {
    // Gson에 LocalDateTime 처리 추가
    private Gson gson = new GsonBuilder()
            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter()) // LocalDateTime을 처리하는 TypeAdapter 등록
-           .create();
+            .create();
 
    //후기 게시글 갯수 조회
    @GetMapping("tripboardCount")

@@ -65,6 +65,14 @@ public class UserDao {
         return code;
     }
 
+    //이메일이 DB에 존재하는지 확인
+    public boolean userExists(String user_email) {
+        log.info("🔍 이메일 존재 여부 확인: {}", user_email);
+        int count = sqlSessionTemplate.selectOne("countByEmail", user_email);
+        log.info("✅ 이메일 존재 여부 (0: 없음, 1 이상: 존재) → count: {}", count);
+        return count > 0; // 0이면 존재하지 않음, 1 이상이면 존재함
+    }
+
     // 아이디 중복검사
     public boolean isUsernameAvailable(@Param("user_id") String user_id) {
         log.info(" 아이디 중복 확인: " + user_id);
@@ -81,4 +89,14 @@ public class UserDao {
     }
     return sqlSessionTemplate.insert("userInsert", signupRequest);
     }
+
+     // 기존 사용자의 role을 SNS로 업데이트
+        public void updateRoleByEmail(String userEmail, String role) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("user_email", userEmail);
+        params.put("role", role);
+
+        sqlSessionTemplate.update("updateRoleByEmail", params);  // MyBatis update 쿼리 호출
+    }
+
 }

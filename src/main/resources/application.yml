@@ -30,7 +30,7 @@ spring:
             scope:
               - name
               - email
-            client-name: Naver
+            client-name: naver
 
           kakao:
             client-id: ${KAKAO_CLIENT_ID}  # ✅ 카카오 REST API 키

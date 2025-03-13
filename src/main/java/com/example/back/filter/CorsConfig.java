@@ -15,6 +15,7 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedHeader("*");
         config.addAllowedOrigin("http://localhost:6006");
+        config.addAllowedOrigin("https://nid.naver.com"); // 네이버 OAuth 요청 허용
         config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);

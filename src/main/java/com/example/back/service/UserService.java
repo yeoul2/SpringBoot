@@ -4,6 +4,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.back.dao.UserDao;
 import com.example.back.model.User;
 
@@ -36,6 +38,11 @@ public class UserService {
     // 아이디 중복 확인 메서드
     public boolean isUsernameAvailable(String userId) {
         return userDao.isUsernameAvailable(userId);
+    }
+
+    @Transactional
+    public void updateUserRole(User user) {
+    userDao.updateRoleByEmail(user);  // MyBatis의 updateRoleByEmail 호출
     }
 }
 
