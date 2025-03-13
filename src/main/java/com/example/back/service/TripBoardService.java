@@ -164,10 +164,10 @@ public class TripBoardService {
 
       if (hasLiked) { // 좋아요가 이미 눌러져 있으면 취소
          result1 = tripBoardDao.disLike(lmap); // 유저 좋아요 삭제
-         result2 = tripBoardDao.disLikeboard((int) (lmap.get("tb_no"))); // 게시글 좋아요 수 감소
+         result2 = tripBoardDao.disLikeboard(Integer.parseInt((String)lmap.get("tb_no"))); // 게시글 좋아요 수 감소
       } else { // 좋아요가 안 눌려 있으면 추가
          result1 = tripBoardDao.addLike(lmap); // 유저 좋아요 추가
-         result2 = tripBoardDao.likeAddboard((int) (lmap.get("tb_no"))); // 게시글 좋아요 수 증가
+         result2 = tripBoardDao.likeAddboard(Integer.parseInt((String)lmap.get("tb_no"))); // 게시글 좋아요 수 증가
       }
 
       // 하나라도 실패하면 예외 발생 → 롤백
