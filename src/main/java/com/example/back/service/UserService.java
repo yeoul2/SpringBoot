@@ -42,7 +42,7 @@ public class UserService {
 
     @Transactional
     public void updateUserRole(User user) {
-    userDao.updateRoleByEmail(user);  // MyBatis의 updateRoleByEmail 호출
+    //userDao.updateRoleByEmail(user);  // MyBatis의 updateRoleByEmail 호출
     }
 }
 

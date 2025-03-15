@@ -3,6 +3,7 @@ package com.example.back.controller;
 import com.example.back.model.TripBoard;
 import com.example.back.service.TripBoardService;
 import com.example.back.utils.LocalDateTimeAdapter;
+import com.example.back.utils.LocalTimeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.log4j.Log4j2;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -21,8 +23,9 @@ public class TripBoardController {
    private TripBoardService tripBoardService;
 
    // Gson에 LocalDateTime 처리 추가
-   private Gson gson = new GsonBuilder()
+   private final Gson gson = new GsonBuilder()
            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter()) // LocalDateTime을 처리하는 TypeAdapter 등록
+           .registerTypeAdapter(LocalTime.class, new LocalTimeAdapter())
             .create();
 
    //후기 게시글 갯수 조회
@@ -42,7 +45,6 @@ public class TripBoardController {
       log.info(tmap);
       List<Map<String, Object>> list = null;
       list = tripBoardService.tripboardList(tmap);
-      Gson g = new Gson();
       String temp = gson.toJson(list);
       return temp;
    }
@@ -53,25 +55,35 @@ public class TripBoardController {
       log.info("tripboardDetail 호출 성공");
       List<Map<String, Object>> list = null;
       list = tripBoardService.tripboardDetail(tmap);
-      Gson g = new Gson();
       String temp = null;
-      temp = g.toJson(list);
+      temp = gson.toJson(list);
       return temp;
    }
 
    // 후기 등록
    @PostMapping("tripboardInsert")
-   public int tripboardInsert(@RequestBody List<Map<String, Object>> requestData) {
+   public int tripboardInsert(@RequestBody Map<String, Object> requestData) {
       log.info("tripboardInsert 호출 성공");
       if (requestData.size() < 2) {
          throw new RuntimeException("올바른 데이터 형식이 아닙니다.");
       }
       // 첫 번째 객체: 게시글 정보
       Gson gson = new Gson();
-      TripBoard board = gson.fromJson(gson.toJson(requestData.get(0)), TripBoard.class);
-      // 두 번째 객체: 코스 리스트
-      List<Map<String, Object>> details = (List<Map<String, Object>>) requestData.get(1).get("course");
+      // 게시글 정보 (TripBoard 객체로 변환)
+      TripBoard board = gson.fromJson(gson.toJson(requestData), TripBoard.class);
 
+      // 코스 리스트 (LinkedHashMap → List 변환)
+      Object courseObj = requestData.get("course");
+
+      List<Map<String, Object>> details;
+      if (courseObj instanceof List) {
+         details = (List<Map<String, Object>>) courseObj;
+      } else {
+         String json = gson.toJson(courseObj); // LinkedHashMap을 JSON 문자열로 변환
+         details = gson.fromJson(json, List.class); // JSON을 List<Map<String, Object>>로 변환
+      }
+
+      log.info("📌 변환된 코스 리스트: " + details); // ✅ 디버깅용 로그 추가
       // 게시글과 코스를 함께 저장
       return tripBoardService.tripboardInsert(board, details);
    }
