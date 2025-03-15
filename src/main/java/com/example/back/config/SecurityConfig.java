@@ -25,7 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.example.back.model.Role;
 
 @Configuration //spring 설정 클래스임을 나타냄
 @EnableWebSecurity //Spring Security를 활성화하는 어노테이션
@@ -70,32 +69,30 @@ public class SecurityConfig {
         .requestMatchers("/api/login").permitAll()
         .requestMatchers("/oauth2/**").permitAll()
         .requestMatchers("/api/check").authenticated() // 🔥 인증된 사용자만 접근 가능
-        .requestMatchers("/login/oauth2/code/google").permitAll() // ✅ 구글 로그인 URL 허용
-        .requestMatchers("/login/oauth2/code/naver").permitAll()  // ✅ 네이버 로그인 URL 허용
+        .requestMatchers("/oauth2/authorization/**").permitAll() // ✅ OAuth2 로그인 엔드포인트 허용
+        .requestMatchers("/oauth/naver/callback").permitAll()
+        .requestMatchers("/oauth/google/callback").permitAll()
         .requestMatchers("/error").permitAll()
         .anyRequest().authenticated())
-
 
         .formLogin(form -> form.disable())  // ✅ Security에서 기본 로그인 페이지 제공 제거
         .httpBasic(httpBasic -> httpBasic.disable()) // ✅ HTTP Basic 인증 제거
 
         .oauth2Login(oauth2 -> oauth2
-            .authorizationEndpoint(endpoint -> 
-                endpoint.baseUri("/oauth2/authorization") // ✅ OAuth2 로그인 엔드포인트 설정
-            )
-            .successHandler(oAuth2LoginSuccessHandler(authenticationService)) // ✅ 로그인 성공 후 처리
-            .failureHandler((request, response, exception) -> { // ✅ 로그인 실패 시 `/login?error` 방지
-                log.error("OAuth2 로그인 실패: {}", exception.getMessage());
-
-                String referer = request.getHeader("Referer");
-                if(referer != null && referer.contains("naver")) {
-                    response.sendRedirect("/oauth2/authorization/naver"); // 네이버 로그인 실패시 재시도
-                } else {
-                    response.sendRedirect("/oauth2/authorization/google"); //구글 로그인 실패 시 재시도
-                }
-            })
-        )
-
+        .authorizationEndpoint(endpoint -> endpoint.baseUri("/oauth2/authorization"))
+        .redirectionEndpoint(endpoint -> endpoint.baseUri("/login/oauth2/code/*"))
+        .successHandler(oAuth2LoginSuccessHandler(authenticationService)) // ✅ 로그인 성공 후 처리
+        .failureHandler((request, response, exception) -> { // ✅ 로그인 실패 시 `/login?error` 방지
+            log.error("OAuth2 로그인 실패: {}", exception.getMessage());
+    
+            String referer = request.getHeader("Referer");
+            if (referer != null && referer.contains("naver")) {
+                response.sendRedirect("/oauth2/authorization/naver"); // 네이버 로그인 실패시 재시도
+            } else {
+                response.sendRedirect("/oauth2/authorization/google"); //구글 로그인 실패 시 재시도
+            }
+        })
+    )
         .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authenticationProvider(authenticationProvider())
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

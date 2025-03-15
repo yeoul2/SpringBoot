@@ -3,10 +3,12 @@ package com.example.back.service;
 import com.example.back.dao.UserDao;
 import com.example.back.model.JwtAuthenticationResponse;
 import com.example.back.model.RefreshTokenRequest;
+import com.example.back.model.Role;
 import com.example.back.model.SigninRequest;
 import com.example.back.model.SignupRequest;
 import com.example.back.model.User;
 import lombok.extern.log4j.Log4j2;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,6 +34,10 @@ public class AuthenticationService {
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    public boolean userExists(String user_email) {
+        return userDao.userExists(user_email);
     }
 
     public JwtAuthenticationResponse signin(SigninRequest signinRequest) {

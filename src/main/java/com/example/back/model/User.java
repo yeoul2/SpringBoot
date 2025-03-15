@@ -8,10 +8,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import lombok.Data;
+import lombok.extern.log4j.Log4j2;
 
 
 //스프링 시큐리티에서는 일반 클래스는 담을 수가 없다.
 //반드시 UserDetails타입만 담을 수 있다.
+@Log4j2
 @Data
 public class User implements UserDetails {
     private int user_no;
@@ -20,10 +22,11 @@ public class User implements UserDetails {
     private String user_id;
     private String user_pw;
     private String user_birth;
-    private Role role; // USER, ADMIN
+    private Role role; // USER, ADMIN, SNS
     //사용자가 가진 권한 정보를 반환하는 메소드 선언
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        log.info("🔍 사용자 역할 확인: {}", role);  // ✅ 역할이 정상적으로 들어가는지 확인
         return List.of(new SimpleGrantedAuthority(role.name()));
     }
     //계정 상태 관련 메소드

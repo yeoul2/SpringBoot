@@ -33,7 +33,7 @@
     </select>
     <!-- 게시글 조회 (공개된 게시글만) -->
     <select id="tripboardList" resultType="map">
-        SELECT tb_no,tb_photo1, tb_title,tb_country,tb_up_date, tb_star, tb_like_count
+        SELECT tb_no,tb_photo1, tb_title,tb_country,tb_up_date, tb_star, tb_like_count,user_id
         FROM trip_board
         WHERE tb_public = 'Y'
         <!-- 검색 기능 -->
@@ -73,11 +73,14 @@
 
     <!-- 특정 번호의 게시글 조회 -->
     <select id="tripboardDetial" resultType="map">
-        SELECT tb_title, user_id, tb_country,tb_city, tb_departure_date, tb_return_date, tb_review,
-                tb_photo1, tb_photo2, tb_photo3, tb_star, tb_like_count, tb_participants,tb_theme
+        SELECT tb_title, user_id, tb_country, tb_city,
+               DATE_FORMAT(tb_departure_date, '%Y-%m-%d') AS tb_departure_date,
+               DATE_FORMAT(tb_return_date, '%Y-%m-%d') AS tb_return_date,
+               tb_review, tb_photo1, tb_photo2, tb_photo3, tb_star, tb_like_count, tb_participants, tb_theme,tb_up_date, tb_public
         FROM trip_board
         WHERE tb_no = #{tb_no}
     </select>
+
 
     <!-- 게시글 추가 -->
     <insert id="tripboardInsert" parameterType="com.example.back.model.TripBoard" useGeneratedKeys="true" keyProperty="tb_no">
@@ -111,6 +114,11 @@
     <update id="tripboardUpdate" parameterType="com.example.back.model.TripBoard">
         UPDATE trip_board
         <set>
+            tb_up_date = CASE
+            WHEN tb_like_count = (SELECT tb_like_count FROM (SELECT * FROM trip_board) AS temp WHERE tb_no= ?)
+            THEN NOW()
+            ELSE tb_up_date
+            END,
             tb_title = #{tb_title},
             tb_country = #{tb_country},
             tb_star = #{tb_star},
@@ -230,7 +238,8 @@
     <!--=========================[[ 보드디테일(코스) 처리 SQL ]] ========================-->
     <!-- 코스 조회(board_detail) -->
     <select id ="tripboardDetailList" parameterType="map">
-        SELECT tbd_time,tbd_place_type,tbd_place,tbd_content,tbd_time_car,tbd_time_public,tbd_day
+        SELECT DATE_FORMAT(tbd_time, '%p %h:%i:%s') AS tbd_time,
+               tbd_place_type,tbd_place,tbd_content,tbd_time_car,tbd_time_public,tbd_day
         FROM trip_board_detail
         WHERE tb_no = #{tb_no}
         ORDER BY tbd_no;

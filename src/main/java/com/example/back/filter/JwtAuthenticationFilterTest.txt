@@ -31,13 +31,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
     //이 필터의 핵심 메소드이다. - 핵심로직을 수행하는 메소드이다.
     //요청이 들어올 때 마다 실행이 됨.
     @Override
-protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
         throws ServletException, IOException {
+        
+
     // 인증이 필요 없는 경로는 바로 지나가게 처리
     String path = request.getRequestURI();
-    //if (path.startsWith("/api/v1/auth/signup") || path.startsWith("/api/v1/auth/signin")) {
-    if (path.startsWith("/api/signup") || path.startsWith("/api/signin")) {
-        filterChain.doFilter(request, response);  // 인증 없이 그냥 요청을 처리
+
+    // ✅ OAuth2 로그인 경로도 필터 제외
+    if (path.startsWith("/api/v1/auth/signup") || 
+        path.startsWith("/api/v1/auth/signin") || 
+        path.startsWith("/oauth2/authorization") || 
+        path.startsWith("/login/oauth2/code")) {
+        filterChain.doFilter(request, response);
         return;
     }
 
@@ -46,56 +52,43 @@ protected void doFilterInternal(HttpServletRequest request, HttpServletResponse 
     log.info("🔍 [JwtAuthenticationFilter] 요청된 Authorization 헤더: {}", authHeader);
     final String jwt;
     final String userId;
-
     try {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // authHeader가 빈값이면 Bearer로 시작하지 않으면 JWT검증 없이 다음 필터로 넘어간다.
+        //if (StringUtils.isEmpty(authHeader) || !org.apache.commons.lang3.StringUtils.startsWith(authHeader, "Bearer")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {    
             log.warn("❌ Authorization 헤더 없음 또는 잘못된 형식: {}", authHeader);
             filterChain.doFilter(request, response);
             return;
         }
-
-        jwt = authHeader.substring(7);
+        // 헤더에 있는 Bearer 뒤에 실제 JWT토큰 문자열을 추출하기
+        jwt = authHeader.substring(7); // 문자열을 자를 때 사용함.
+        // 추출한 토큰에서 사용자 이름을 추출함.
         userId = jwtService.extractUserName(jwt);
 
         log.info("✅ [JwtAuthenticationFilter] JWT 추출 완료 - UserID: {}", userId);
 
+        // userId가 존재하고 현재 SecurityContext에 인증 정보가 없는 경우에만 추가 인증을 수행함
         if (StringUtils.isNotEmpty(userId) && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userService.userDetailsService().loadUserByUsername(userId);
-            
-            // ✅ 토큰이 만료되었는지 확인
-            if (jwtService.isTokenExpired(jwt)) {
-                log.warn("❌ [토큰 만료됨] JWT가 만료되었습니다. 사용자 이메일: {}", userId);
-
-                // ✅ SecurityContext 초기화 (로그아웃 효과)
-                SecurityContextHolder.clearContext();
-
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"message\": \"토큰이 만료되었습니다. 다시 로그인하세요.\"}");
-                return;
-            }
-
-            // ✅ 토큰이 유효하면 SecurityContextHolder에 저장
+            // jwtService.isTokenValid(jwt, userDetails)를 통해 토큰이 유효한지 확인합니다.
             if (jwtService.isTokenValid(jwt, userDetails)) {
+                // 새 SecurityContext 생성하고 사용자 정보와 권한 정보를 담은 UsernamePasswordAuthenticationToken을 생성함.
                 SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
                 UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities()
                 );
+                // 요청에 대한 세부 정보를 토큰에 추가한 뒤 이 토큰을 SecurityContext에 설정함.
                 token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 securityContext.setAuthentication(token);
+                // 최종적으로 SecurityContextHolder에 저장함.
                 SecurityContextHolder.setContext(securityContext);
                 log.info("✅ JWT 인증 성공 - User: {}", userId);
             }
-        }
-    } catch (ExpiredJwtException e) {
-        log.warn("❌ [토큰 만료됨] JWT가 만료되었습니다.");
-
-        // ✅ SecurityContext 초기화 (로그아웃 효과)
-        //SecurityContextHolder.clearContext();
-
+        } // 사용자 인증 처리
+    } catch (ExpiredJwtException e) { // 예외처리: 토큰 만료
+        log.info("토큰이 만료되었습니다");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType("application/json");
-        response.getWriter().write("{\"message\": \"토큰이 만료되었습니다. 다시 로그인하세요.\"}");
+        response.getWriter().write("토큰이 만료되었습니다");
         return;
     }
     // 다음 필터 체인을 계속 실행시킴
