@@ -25,7 +25,6 @@ public class JwtAuthenticationResponse {
     public JwtAuthenticationResponse( String accessToken, String refreshToken, String user_id, 
                                     String user_email, String user_name, String user_birth, 
                                     int user_no, Role role) {
-        //this.googleAccessToken = googleAccessToken; // ✅ 구글에서 받은 액세스 토큰 추가
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.user_id = user_id;
@@ -36,12 +35,6 @@ public class JwtAuthenticationResponse {
         this.role = role;
     }
 
-    // ✅ 2. 일반 로그인용 생성자 (googleAccessToken 없이 사용 가능)
-    /* public JwtAuthenticationResponse(String accessToken, String refreshToken, 
-                                    String user_id, String user_email, String user_name, 
-                                    String user_birth, int user_no, Role role) {
-        this(null, accessToken, refreshToken, user_id, user_email, user_name, user_birth, user_no, role);
-    } */
 }
 
 

@@ -8,6 +8,7 @@ import com.example.back.model.SignupRequest;
 import com.example.back.model.User;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.annotations.Param;
@@ -65,13 +66,71 @@ public class UserDao {
         return code;
     }
 
-    //이메일이 DB에 존재하는지 확인
-    public boolean userExists(String user_email) {
-        log.info("🔍 이메일 존재 여부 확인: {}", user_email);
-        int count = sqlSessionTemplate.selectOne("countByEmail", user_email);
-        log.info("✅ 이메일 존재 여부 (0: 없음, 1 이상: 존재) → count: {}", count);
-        return count > 0; // 0이면 존재하지 않음, 1 이상이면 존재함
+    // 이메일 인증 여부 확인
+    public boolean isEmailVerified(String user_email) {
+        log.info("이메일 인증 여부 확인: {}", user_email);
+
+        //List<String> roles = sqlSessionTemplate.selectList("findRolesByEmail", user_email);
+
+        Integer count = sqlSessionTemplate.selectOne("isEmailVerified", user_email);
+
+        boolean verified = count != null && count > 0;
+        log.info("✅ 이메일 인증 상태 (0: 인증 안 됨, 1 이상: 인증 완료) → verified: {}", verified);
+
+          // 기본 로그인(USER) 계정이 있으면 인증 필요
+        //boolean requiresVerification = roles.contains("USER");
+
+        /* if (!requiresVerification) {
+            log.info("✅ 이메일 인증 필요 없음 (SNS 계정만 존재)");
+            return true; // SNS 계정만 있으면 자동 인증 성공
+        }
+
+        int count = sqlSessionTemplate.selectOne("isEmailVerified", user_email);
+        log.info("✅ 이메일 인증 여부 (0: 인증 안 됨, 1 이상: 인증 완료) → count: {}", count); */
+
+        return verified;
     }
+
+    // 이메일 인증 완료 시 `expired` 값을 true로 변경
+    public void updateVerificationStatus(String user_email) {
+    log.info("🔹 [이메일 인증 완료] 인증 상태 업데이트 - 이메일: {}", user_email);
+    sqlSessionTemplate.update("updateVerificationStatus", user_email);
+    }
+
+    //이메일이 DB에 존재하는지 확인
+
+    public List<String> findRolesByEmail(String user_email) {
+        log.info("🔍 이메일에 대한 Role 조회: {}", user_email);
+        return sqlSessionTemplate.selectList("findRolesByEmail", user_email);
+    }
+
+    // 이메일이 DB에 존재하는지 확인 (Role 기반 검사 추가)
+    public boolean userExists(String user_email) {
+    log.info("🔍 이메일 존재 여부 확인 (Role 포함): {}", user_email);
+    
+    List<String> roles = sqlSessionTemplate.selectList("findRolesByEmail", user_email);
+    boolean exists = roles.contains("USER");
+
+    log.info("✅ 이메일 존재 여부 (0: 없음, 1 이상: 존재) → exists: {}", exists);
+    return exists;
+    }
+
+
+    /* public boolean userExists(String user_email) {
+        log.info("🔍 이메일 존재 여부 확인: {}", user_email);
+
+        // 같은 이메일을 가진 모든 계정 조회
+        List<String> roles = sqlSessionTemplate.selectList("findRolesByEmail", user_email);
+
+        // 기본로그인(USER) 가 있다면 중복메일로 처리
+        boolean exists = roles.contains("USER");
+
+        //int count = sqlSessionTemplate.selectOne("countByEmail", user_email);
+        //log.info("✅ 이메일 존재 여부 (0: 없음, 1 이상: 존재) → count: {}", count);
+
+        log.info("이메일 존재 여부(0: 없음 1 이상: 존재) -> exists: {}", exists);
+        return exists;
+    } */
 
     // 아이디 중복검사
     public boolean isUsernameAvailable(@Param("user_id") String user_id) {
@@ -98,5 +157,4 @@ public class UserDao {
 
         sqlSessionTemplate.update("updateRoleByEmail", params);  // MyBatis update 쿼리 호출
     }
-
 }
