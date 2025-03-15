@@ -31,22 +31,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
     //이 필터의 핵심 메소드이다. - 핵심로직을 수행하는 메소드이다.
     //요청이 들어올 때 마다 실행이 됨.
     @Override
-protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
         throws ServletException, IOException {
+        
+
     // 인증이 필요 없는 경로는 바로 지나가게 처리
     String path = request.getRequestURI();
-    if (path.startsWith("/api/v1/auth/signup") || path.startsWith("/api/v1/auth/signin")) {
-        filterChain.doFilter(request, response);  // 인증 없이 그냥 요청을 처리
+
+    // ✅ OAuth2 로그인 경로도 필터 제외
+    if (path.startsWith("/api/v1/auth/signup") || 
+        path.startsWith("/api/v1/auth/signin") || 
+        path.startsWith("/oauth2/authorization") || 
+        path.startsWith("/login/oauth2/code")) {
+        filterChain.doFilter(request, response);
         return;
     }
 
     // 기존 JWT 인증 로직
     final String authHeader = request.getHeader("Authorization");
+    log.info("🔍 [JwtAuthenticationFilter] 요청된 Authorization 헤더: {}", authHeader);
     final String jwt;
     final String userId;
     try {
         // authHeader가 빈값이면 Bearer로 시작하지 않으면 JWT검증 없이 다음 필터로 넘어간다.
-        if (StringUtils.isEmpty(authHeader) || !org.apache.commons.lang3.StringUtils.startsWith(authHeader, "Bearer")) {
+        //if (StringUtils.isEmpty(authHeader) || !org.apache.commons.lang3.StringUtils.startsWith(authHeader, "Bearer")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {    
+            log.warn("❌ Authorization 헤더 없음 또는 잘못된 형식: {}", authHeader);
             filterChain.doFilter(request, response);
             return;
         }
@@ -54,6 +64,9 @@ protected void doFilterInternal(HttpServletRequest request, HttpServletResponse 
         jwt = authHeader.substring(7); // 문자열을 자를 때 사용함.
         // 추출한 토큰에서 사용자 이름을 추출함.
         userId = jwtService.extractUserName(jwt);
+
+        log.info("✅ [JwtAuthenticationFilter] JWT 추출 완료 - UserID: {}", userId);
+
         // userId가 존재하고 현재 SecurityContext에 인증 정보가 없는 경우에만 추가 인증을 수행함
         if (StringUtils.isNotEmpty(userId) && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userService.userDetailsService().loadUserByUsername(userId);
@@ -69,6 +82,7 @@ protected void doFilterInternal(HttpServletRequest request, HttpServletResponse 
                 securityContext.setAuthentication(token);
                 // 최종적으로 SecurityContextHolder에 저장함.
                 SecurityContextHolder.setContext(securityContext);
+                log.info("✅ JWT 인증 성공 - User: {}", userId);
             }
         } // 사용자 인증 처리
     } catch (ExpiredJwtException e) { // 예외처리: 토큰 만료

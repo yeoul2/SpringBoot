@@ -11,4 +11,7 @@ public class SignupRequest {
     private String user_pw; //12345가 아니라 암호화된 비번을 담을 것 - 주의
     private String user_birth;
     private Role role;
+
 }
+
+

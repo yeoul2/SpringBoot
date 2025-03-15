@@ -40,6 +40,20 @@ public class UserService {
         return userDao.isUsernameAvailable(userId);
     }
 
+    // 아이디 찾기를 위한 메서드
+    public String findUserIdByEmail(String user_email){
+        User user = userDao.findByEmail(user_email);
+        if(user == null){
+            throw new RuntimeException("해당 이메일로 등록된 아이디가 없습니다.");
+        }
+        return user.getUser_id();
+    }
+
+    // 이메일 중복 확인
+    public boolean isEmailExists(String user_email) {
+        return userDao.userExists(user_email);
+    }
+
     @Transactional
     public void updateUserRole(User user) {
     //userDao.updateRoleByEmail(user);  // MyBatis의 updateRoleByEmail 호출

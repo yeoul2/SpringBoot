@@ -1,12 +1,9 @@
 package com.example.back.controller;
 
-import com.example.back.dao.UserDao;
 import com.example.back.model.JwtAuthenticationResponse;
 import com.example.back.model.Role;
 import com.example.back.model.SignupRequest;
-import com.example.back.model.User;
 import com.example.back.service.AuthenticationService;
-import com.example.back.service.UserService;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;

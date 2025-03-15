@@ -69,7 +69,6 @@ public class SecurityConfig {
         .requestMatchers("/api/login").permitAll()
         .requestMatchers("/oauth2/**").permitAll()
         .requestMatchers("/api/check").authenticated() // 🔥 인증된 사용자만 접근 가능
-        //.requestMatchers("/login/oauth2/code/**").permitAll() // ✅ `/code/google`, `/code/naver` 모두 허용
         .requestMatchers("/oauth2/authorization/**").permitAll() // ✅ OAuth2 로그인 엔드포인트 허용
         .requestMatchers("/oauth/naver/callback").permitAll()
         .requestMatchers("/oauth/google/callback").permitAll()
@@ -94,7 +93,6 @@ public class SecurityConfig {
             }
         })
     )
-
         .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authenticationProvider(authenticationProvider())
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

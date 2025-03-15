@@ -26,10 +26,14 @@ public class JWTService {
     @Value("${spring.security.jwt.expiration}") // ✅ 만료 시간 가져오기
     private long expiration;
 
+    /* @Value("${spring.security.jwt.refresh-expiration}") // ✅ 리프레시 토큰 만료 시간 추가
+    private long refreshExpiration; */
+
     @PostConstruct
     public void logSecretKey() {
         log.info("✅ Loaded JWT Secret Key: " + secretKey);
         log.info("✅ JWT Expiration Time: " + expiration);
+        //log.info("✅ Refresh Token Expiration Time: " + refreshExpiration);
     }
 
     public String generateToken(UserDetails userDetails) {
@@ -51,6 +55,7 @@ public class JWTService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 7)) // 7일
+                //.setExpiration(new Date(System.currentTimeMillis() + refreshExpiration)) 
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -83,9 +88,21 @@ public class JWTService {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUserName(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        
+        //return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
-    private boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
+
+    // 리프레시 토큰 만료 여부 확인
+    /* public boolean isRefreshTokenExpired(String refreshToken) {
+        try {
+            return extractClaim(refreshToken, Claims::getExpiration).before(new Date());
+        } catch (Exception e) {
+            log.error("❌ 리프레시 토큰 검증 실패: {}", e.getMessage());
+            return true; // 예외 발생 시 만료된 것으로 처리
+        }
+    } */
 }
