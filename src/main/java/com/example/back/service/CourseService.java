@@ -30,17 +30,20 @@ public class CourseService {
     }
 
     // ✅ 코스 + 상세 정보 함께 저장
-    public int insertCourseWithDetails(Course course) {
+    public int insertCourseWithDetails(Course course, List<Map<String, Object>> details) {
         log.info("insertCourseWithDetails 호출 성공");
-        int result = courseDao.insertCourse(course); // 코스 저장
-        if (result > 0) {
-            for (CourseDetail detail : course.getDetails()) {
-                detail.setCs_no(course.getCs_no()); // FK 설정
-                courseDao.insertCourseDetail(detail); // 상세 정보 저장
+        int cs_no = courseDao.insertCourse(course); // 코스 저장
+        if (cs_no > 0) {
+            for (Map<String, Object> detail : details) {
+                detail.put("cs_no", cs_no);
+                int result = courseDao.insertCourseDetail(detail);// 상세 정보 저장
+                if (result != 1) {
+                   throw new RuntimeException("코스 등록 실패");
+                }
             }
         }
         log.info("insertCourseWithDetails 완료: 코스 번호 " + course.getCs_no());
-        return result;
+        return cs_no;
     }
 
  /*    // ✅ 코스 + 상세 정보 함께 수정
