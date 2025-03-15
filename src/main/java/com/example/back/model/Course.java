@@ -18,5 +18,5 @@ public class Course {
     private int cs_like_count; // 좋아요 개수
 
     // ✅ 코스 상세 정보 리스트 (1:N 관계)
-   private List<CourseDetail> details;
+    private List<CourseDetail> details;
 }

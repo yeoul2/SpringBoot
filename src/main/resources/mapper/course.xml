@@ -4,57 +4,85 @@
 
 <mapper namespace="com.example.back.dao.CourseDao">
 
-   <!-- ✅ 전체 코스 조회 (상세 정보 포함) -->
-   <select id="getCourseList" resultType="com.example.back.model.Course">
-      SELECT c.*, d.cdt_no, d.cdt_place, d.cdt_place_type, d.cdt_time_car, d.cdt_time_public
-      FROM course c
-      LEFT JOIN cs_detail d ON c.cs_no = d.cs_no
+   <!-- ✅ 코스 개수 조회 -->
+   <select id="courseCount" resultType="int">
+      SELECT COUNT(*) FROM course
+      <if test="keyword != null and keyword != ''">
+         WHERE cs_name LIKE CONCAT('%', #{keyword}, '%')
+      </if>
    </select>
 
-   <!-- ✅ 특정 코스 조회 (상세 정보 포함) -->
-   <select id="findCourseById" parameterType="int" resultType="com.example.back.model.Course">
-      SELECT c.*, d.cdt_no, d.cdt_place, d.cdt_place_type, d.cdt_time_car, d.cdt_time_public
-      FROM course c
-      LEFT JOIN cs_detail d ON c.cs_no = d.cs_no
-      WHERE c.cs_no = #{cs_no}
+   <!-- ✅ 전체 코스 조회 -->
+   <select id="getCourseList" resultType="map">
+      SELECT cs_no, cs_name, cs_country, cs_city, cs_departure_date, cs_return_date, cs_like_count
+      FROM course
+      <if test="keyword != null and keyword != ''">
+         WHERE cs_name LIKE CONCAT('%', #{keyword}, '%')
+      </if>
+      ORDER BY
+      CASE
+         WHEN #{order} = '최신순' THEN cs_departure_date
+         WHEN #{order} = '인기순' THEN cs_like_count
+         ELSE cs_departure_date
+      END DESC
    </select>
 
-   <!-- ✅ 코스 저장 -->
+   <!-- ✅ 특정 코스 조회 -->
+   <select id="getCourseDetail" resultType="map">
+      SELECT * FROM course WHERE cs_no = #{cs_no}
+   </select>
+
+   <!-- ✅ 코스 추가 -->
    <insert id="insertCourse" parameterType="com.example.back.model.Course" useGeneratedKeys="true" keyProperty="cs_no">
-      INSERT INTO course (user_id, cs_name, cs_country, cs_city, cs_departure_date, cs_return_date, cs_people_num, cs_theme, cs_like_count)
-      VALUES (#{user_id}, #{cs_name}, #{cs_country}, #{cs_city}, #{cs_departure_date}, #{cs_return_date}, #{cs_people_num}, #{cs_theme}, #{cs_like_count})
+      INSERT INTO course
+      <trim prefix="(" suffix=")" suffixOverrides=",">
+         user_id, cs_name, cs_country, cs_city, cs_like_count
+         <if test="cs_departure_date != null"> ,cs_departure_date </if>
+         <if test="cs_return_date != null"> ,cs_return_date </if>
+         <if test="cs_people_num != null"> ,cs_people_num </if>
+         <if test="cs_theme != null"> ,cs_theme </if>
+      </trim>
+      VALUES
+      <trim prefix="(" suffix=")" suffixOverrides=",">
+         #{user_id}, #{cs_name}, #{cs_country}, #{cs_city}, #{cs_like_count}
+         <if test="cs_departure_date != null"> ,#{cs_departure_date} </if>
+         <if test="cs_return_date != null"> ,#{cs_return_date} </if>
+         <if test="cs_people_num != null"> ,#{cs_people_num} </if>
+         <if test="cs_theme != null"> ,#{cs_theme} </if>
+      </trim>
    </insert>
 
-   <!-- ✅ 코스 상세 저장 (기존 cs_detail.xml의 내용 포함) -->
-   <insert id="insertCourseDetail" parameterType="com.example.back.model.CourseDetail">
-      INSERT INTO cs_detail (cs_no, cdt_place, cdt_place_type, cdt_time_car, cdt_time_public)
-      VALUES (#{cs_no}, #{cdt_place}, #{cdt_place_type}, #{cdt_time_car}, #{cdt_time_public})
-   </insert>
-
-   <!-- ✅ 코스 수정 -->
-   <update id="updateCourse" parameterType="com.example.back.model.Course">
-      UPDATE course
-      SET cs_name = #{cs_name}, cs_country = #{cs_country}, cs_city = #{cs_city},
-         cs_departure_date = #{cs_departure_date}, cs_return_date = #{cs_return_date},
-         cs_people_num = #{cs_people_num}, cs_theme = #{cs_theme}, cs_like_count = #{cs_like_count}
-      WHERE cs_no = #{cs_no}
-   </update>
-
-   <!-- ✅ 코스 상세 수정 -->
-   <update id="updateCourseDetail" parameterType="com.example.back.model.CourseDetail">
-      UPDATE cs_detail
-      SET cdt_place = #{cdt_place}, cdt_place_type = #{cdt_place_type}, cdt_time_car = #{cdt_time_car}, cdt_time_public = #{cdt_time_public}
-      WHERE cdt_no = #{cdt_no}
-   </update>
-
-   <!-- ✅ 코스 상세 삭제 -->
-   <delete id="deleteCourseDetails" parameterType="int">
-      DELETE FROM cs_detail WHERE cs_no = #{cs_no}
+   <!-- ✅ 코스 삭제 -->
+   <delete id="deleteCourse">
+      DELETE FROM course WHERE cs_no = #{cs_no}
    </delete>
 
-   <!-- ✅ 코스 삭제 (상세 정보도 함께 삭제) -->
-   <delete id="deleteCourse" parameterType="int">
-      DELETE FROM course WHERE cs_no = #{cs_no}
+   <!-- ✅ 코스 상세 조회 -->
+   <select id="courseDetailList" resultType="map">
+      SELECT * FROM cs_detail WHERE cs_no = #{cs_no} ORDER BY cdt_no
+   </select>
+
+   <!-- ✅ 코스 상세 추가 -->
+   <insert id="insertCourseDetail" parameterType="map">
+      INSERT INTO cs_detail
+      <trim prefix="(" suffix=")" suffixOverrides=",">
+         cs_no, cdt_place, cdt_day
+         <if test="cdt_place_type != null"> ,cdt_place_type </if>
+         <if test="cdt_time_car != null"> ,cdt_time_car </if>
+         <if test="cdt_time_public != null"> ,cdt_time_public </if>
+      </trim>
+      VALUES
+      <trim prefix="(" suffix=")" suffixOverrides=",">
+         #{cs_no}, #{cdt_place}, #{cdt_day}
+         <if test="cdt_place_type != null"> ,#{cdt_place_type} </if>
+         <if test="cdt_time_car != null"> ,#{cdt_time_car} </if>
+         <if test="cdt_time_public != null"> ,#{cdt_time_public} </if>
+      </trim>
+   </insert>
+
+   <!-- ✅ 코스 상세 삭제 -->
+   <delete id="deleteCourseDetails">
+      DELETE FROM cs_detail WHERE cs_no = #{cs_no}
    </delete>
 
 </mapper>

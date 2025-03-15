@@ -1,25 +1,26 @@
-      package com.example.back.dao;
+package com.example.back.dao;
 
-      import com.example.back.model.Course;
-      import com.example.back.model.CourseDetail;
-      import lombok.extern.log4j.Log4j2;
-      import org.mybatis.spring.SqlSessionTemplate;
-      import org.springframework.beans.factory.annotation.Autowired;
-      import org.springframework.stereotype.Repository;
+import com.example.back.model.Course;
+import com.example.back.model.CourseDetail;
+import lombok.extern.log4j.Log4j2;
+import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
-      import java.util.List;
-      import java.util.Map;
+import java.util.List;
+import java.util.Map;
 
-      @Log4j2
-      @Repository
-      public class CourseDao {
+@Log4j2
+@Repository
+public class CourseDao {
       @Autowired
       private SqlSessionTemplate sqlSessionTemplate;
 
       // ✅ 코스 목록 조회
       public List<Map<String, Object>> getCourseList(Map<String, Object> paramMap) {
             log.info("getCourseList 호출 성공");
-            List<Map<String, Object>> list = sqlSessionTemplate.selectList("com.example.back.dao.CourseDao.getCourseList", paramMap);
+            List<Map<String, Object>> list = sqlSessionTemplate
+                        .selectList("com.example.back.dao.CourseDao.getCourseList", paramMap);
             log.info("코스 개수: " + list.size());
             return list;
       }
@@ -35,17 +36,8 @@
             log.info("insertCourse 호출 성공");
             int result = sqlSessionTemplate.insert("com.example.back.dao.CourseDao.insertCourse", course);
             log.info("추가된 코스 번호: " + course.getCs_no());
-            return result;
+            return result > 0 ? course.getCs_no() : -1;
       }
-
-      /* // ✅ 코스 수정
-      public int updateCourse(Map<String, Object> paramMap) {
-            log.info("updateCourse 호출 성공");
-            log.info("수정할 데이터: " + paramMap);
-            int result = sqlSessionTemplate.update("com.example.back.dao.CourseDao.updateCourse", paramMap);
-            log.info("수정된 행 개수: " + result);
-            return result;
-      } */
 
       // ✅ 코스 삭제
       public int deleteCourse(int cs_no) {
@@ -64,20 +56,12 @@
       }
 
       // ✅ 코스 상세 정보 추가
-      public int insertCourseDetail(CourseDetail courseDetail) {
+      public int insertCourseDetail(Map<String, Object> courseDetail) {
             log.info("insertCourseDetail 호출 성공");
             int result = sqlSessionTemplate.insert("com.example.back.dao.CourseDao.insertCourseDetail", courseDetail);
-            log.info("추가된 상세 번호: " + courseDetail.getCdt_no());
             return result;
       }
 
-      // ✅ 코스 상세 정보 수정
-      public int updateCourseDetail(Map<String, Object> paramMap) {
-            log.info("updateCourseDetail 호출 성공");
-            int result = sqlSessionTemplate.update("com.example.back.dao.CourseDao.updateCourseDetail", paramMap);
-            log.info("수정된 상세 정보 개수: " + result);
-            return result;
-      }
 
       // ✅ 코스 상세 정보 삭제
       public int deleteCourseDetails(int cs_no) {
@@ -86,4 +70,4 @@
             log.info("삭제된 상세 정보 개수: " + result);
             return result;
       }
-      }
+}
