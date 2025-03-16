@@ -32,25 +32,4 @@ public class SearchController {
     List<Map<String, Object>> list = searchService.getPopularSearches(); // ✅ 이제 List<Map<String, Object>> 반환됨
     return new Gson().toJson(list); // ✅ 컨트롤러에서 JSON 변환 수행
   }
-
-  // 🔹 자동 완성 검색어 조회 (RequestParam 수정)
-  @GetMapping("suggestions")
-  public String getSearchSuggestions(@RequestParam Map<String, Object> paramMap) {
-    log.info("getSearchSuggestions 호출 성공 | 파라미터: {}", paramMap);
-
-    // 🔹 searchTerm을 안전하게 변환
-    String searchTerm = paramMap.getOrDefault("searchTerm", "").toString().trim();
-
-    // 🔹 searchTerm이 비어있으면 바로 빈 리스트 반환
-    if (searchTerm.isEmpty()) {
-      log.warn("⚠️ 검색어가 비어 있음!");
-      return new Gson().toJson(List.of());
-    }
-
-    log.info("✅ 검색어: {}", searchTerm);
-
-    List<String> list = searchService.getSearchSuggestions(searchTerm); // ✅ 이제 정상적으로 동작
-    return new Gson().toJson(list);
-  }
-
 }

@@ -62,18 +62,4 @@ public class SearchDao {
     log.info("✅ getLastSearchTerm 결과: {}", lastTerm);
     return lastTerm != null ? lastTerm : "";  // ✅ NULL 방지 (검색 기록이 없을 경우 빈 문자열 반환)
   }
-
-  // 🔹 자동 완성 검색어 조회 (사용자가 입력한 검색어와 비슷한 검색어 리스트 반환)
-  public List<String> getSearchSuggestions(String searchTerm) {
-    log.info("🔍 getSearchSuggestions 호출 성공 | 검색어: {}", searchTerm);
-
-    if (searchTerm == null || searchTerm.trim().isEmpty()) {
-      log.warn("⚠️ 검색어가 비어 있음! 자동 완성 검색어 조회 중단.");
-      return List.of(); // ✅ 빈 리스트 반환하여 SQL 실행 방지
-    }
-
-    List<String> list = sqlSessionTemplate.selectList("getSearchSuggestions", searchTerm.trim()); // ✅ LIKE 검색 시 SQL에서 처리
-    log.info("✅ getSearchSuggestions 결과 개수: {}", (list != null ? list.size() : 0));
-    return list != null ? list : List.of(); // ✅ NPE 방지
-  }
 }

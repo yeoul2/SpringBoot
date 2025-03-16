@@ -39,20 +39,12 @@
         ORDER BY search_count DESC LIMIT 10;
     </select>
 
-    <!-- 🔹 자동 완성 검색어 조회 -->
-    <select id="getSearchSuggestions" resultType="String">
-        SELECT DISTINCT search_term
-        FROM search_history
-        WHERE search_term LIKE CONCAT(#{searchTerm}, '%') LIMIT 10;
-    </select>
-
     <!-- 🔹 사용자가 마지막으로 검색한 검색어를 가져오는 쿼리 -->
     <select id="getLastSearchTerm" parameterType="map" resultType="string">
-        SELECT search_term  <!-- ✅ 검색어만 가져옴 -->
-        FROM search_history  <!-- ✅ 검색 기록 테이블에서 조회 -->
-        WHERE user_id = #{userId}  <!-- ✅ 특정 사용자의 검색 기록만 조회 -->
-        ORDER BY search_date DESC  <!-- ✅ 가장 최근 검색한 기록을 가져오기 위해 날짜 내림차순 정렬 -->
-        LIMIT 1;  <!-- ✅ 가장 최신 검색어 1개만 반환 -->
+        SELECT search_term
+        FROM search_history
+        WHERE user_id = #{userId}
+        ORDER BY search_date DESC LIMIT 1;
     </select>
 
 </mapper>
