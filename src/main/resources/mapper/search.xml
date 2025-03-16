@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.back.dao.SearchDao">
+
+    <!-- 🔹 검색 기록 저장 -->
+    <insert id="insertSearchHistory" parameterType="map">
+        INSERT INTO search_history (user_id, search_term, search_type)
+        VALUES (#{userId}, #{searchTerm}, #{searchType});
+    </insert>
+
+    <!-- 🔹 인기 검색어 확인 -->
+    <select id="checkPopularSearchExists" resultType="int">
+        SELECT COUNT(*)
+        FROM popular_searches
+        WHERE search_term = #{searchTerm}
+          AND search_type = #{searchType}
+    </select>
+
+    <!-- 🔹 기존 검색어의 검색 횟수 증가 -->
+    <update id="updatePopularSearchCount">
+        UPDATE popular_searches
+        SET search_count = search_count + 1
+        WHERE search_term = #{searchTerm}
+          AND search_type = #{searchType}
+    </update>
+
+    <!-- 🔹 새로운 검색어 추가 -->
+    <insert id="insertPopularSearch">
+        INSERT INTO popular_searches (search_term, search_type, search_count)
+        VALUES (#{searchTerm}, #{searchType}, 1);
+    </insert>
+
+    <!-- 🔹 인기 검색어 조회 -->
+    <select id="getPopularSearches" resultType="map">
+        SELECT search_term, search_type, search_count
+        FROM popular_searches
+        ORDER BY search_count DESC LIMIT 10;
+    </select>
+
+    <!-- 🔹 자동 완성 검색어 조회 -->
+    <select id="getSearchSuggestions" resultType="String">
+        SELECT DISTINCT search_term
+        FROM search_history
+        WHERE search_term LIKE CONCAT(#{searchTerm}, '%') LIMIT 10;
+    </select>
+
+    <!-- 🔹 사용자가 마지막으로 검색한 검색어를 가져오는 쿼리 -->
+    <select id="getLastSearchTerm" parameterType="map" resultType="string">
+        SELECT search_term  <!-- ✅ 검색어만 가져옴 -->
+        FROM search_history  <!-- ✅ 검색 기록 테이블에서 조회 -->
+        WHERE user_id = #{userId}  <!-- ✅ 특정 사용자의 검색 기록만 조회 -->
+        ORDER BY search_date DESC  <!-- ✅ 가장 최근 검색한 기록을 가져오기 위해 날짜 내림차순 정렬 -->
+        LIMIT 1;  <!-- ✅ 가장 최신 검색어 1개만 반환 -->
+    </select>
+
+</mapper>
