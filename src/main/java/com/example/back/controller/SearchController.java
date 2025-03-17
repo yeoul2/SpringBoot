@@ -1,35 +1,66 @@
 package com.example.back.controller;
 
+import com.example.back.model.CustomUserDetails;
 import com.example.back.service.SearchService;
-import com.google.gson.Gson;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
-@Log4j2
 @RestController
+@RequestMapping("/api/search")
 @RequiredArgsConstructor
-@RequestMapping("/api/search/")
 public class SearchController {
 
-  private final SearchService searchService; // 🔹 `final` 사용하여 불변성 보장
+	private final SearchService searchService;
 
-  // 🔹 검색 기록 저장
-  @PostMapping("saveSearch")
-  public String saveSearch(@RequestBody Map<String, Object> requestData) {
-    log.info("saveSearch 호출 성공 | 파라미터: {}", requestData);
-    searchService.saveSearch(requestData);
-    return "1"; // ✅ 기존 프로젝트 스타일 유지
+	// 🔹 1. 최근 검색어 저장 (로그인한 사용자만 가능)
+	@PostMapping("/recent-save")
+  public ResponseEntity<String> saveRecentSearch(@RequestParam String searchTerm,
+                                                 @RequestParam String searchType,
+                                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
+    if (userDetails == null) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+    }
+    searchService.saveRecentSearch(userDetails.getUserNo(), searchTerm, searchType);
+    return ResponseEntity.ok("최근 검색어가 저장되었습니다.");
   }
 
-  // 🔹 인기 검색어 조회 (반환 타입 수정)
-  @GetMapping("popular")
-  public String getPopularSearches(@RequestParam Map<String, Object> paramMap) {
-    log.info("getPopularSearches 호출 성공 | 파라미터: {}", paramMap);
-    List<Map<String, Object>> list = searchService.getPopularSearches(); // ✅ 이제 List<Map<String, Object>> 반환됨
-    return new Gson().toJson(list); // ✅ 컨트롤러에서 JSON 변환 수행
-  }
+	// 🔹 2. 최근 검색어 조회 (최대 5개)
+	@GetMapping("/recent-list")
+	public ResponseEntity<List<Map<String, Object>>> getRecentSearchList(@AuthenticationPrincipal CustomUserDetails userDetails) {
+		if (userDetails == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+		}
+		return ResponseEntity.ok(searchService.getRecentSearchList(userDetails.getUserNo()));
+	}
+
+	// 🔹 3. 최근 검색어 삭제
+	@DeleteMapping("/recent-delete")
+	public ResponseEntity<String> deleteRecentSearch(@RequestParam String searchTerm,
+	                                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
+		if (userDetails == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+		}
+		searchService.deleteRecentSearch(userDetails.getUserNo(), searchTerm);
+		return ResponseEntity.ok("최근 검색어가 삭제되었습니다.");
+	}
+
+	// 🔹 4. 인기 검색어 업데이트 (검색할 때마다 호출, 모든 사용자 반영)
+	@PostMapping("/popular-update")
+	public ResponseEntity<String> updatePopularSearchCount(@RequestParam String searchTerm,
+	                                                       @RequestParam String searchType) {
+		searchService.updatePopularSearchCount(searchTerm, searchType);
+		return ResponseEntity.ok("인기 검색어가 업데이트되었습니다.");
+	}
+
+	// 🔹 5. 인기 검색어 조회 (TOP 10)
+	@GetMapping("/popular-list")
+	public ResponseEntity<List<Map<String, Object>>> getPopularSearchList() {
+		return ResponseEntity.ok(searchService.getPopularSearchList());
+	}
 }

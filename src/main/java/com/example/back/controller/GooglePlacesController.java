@@ -2,7 +2,6 @@ package com.example.back.controller;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -49,10 +48,10 @@ public class GooglePlacesController {
 	/**
 	 * 🔹 2. 장소 검색 (Nearby Search)
 	 */
-	@GetMapping("/nearbysearch")
+	@GetMapping("/nearby-search")
 	public Mono<String> getNearbySearch(@RequestParam String location,
-																			@RequestParam int radius,
-																			@RequestParam String type) {
+	                                    @RequestParam int radius,
+	                                    @RequestParam String type) {
 		return webClient.get()
 				.uri(uriBuilder -> uriBuilder
 						.path("/place/nearbysearch/json")
@@ -69,7 +68,7 @@ public class GooglePlacesController {
 	/**
 	 * 🔹 3. 장소 상세 정보 조회 (Place Details)
 	 */
-	@GetMapping("/details")
+	@GetMapping("/place-details")
 	public Mono<String> getPlaceDetails(@RequestParam String placeId) {
 		return webClient.get()
 				.uri(uriBuilder -> uriBuilder
@@ -85,9 +84,9 @@ public class GooglePlacesController {
 	/**
 	 * 🔹 4. 장소 사진 조회 (Place Photos)
 	 */
-	@GetMapping("/photo")
+	@GetMapping("/place-photo")
 	public String getPlacePhoto(@RequestParam String photoReference,
-															@RequestParam(defaultValue = "400") int maxWidth) {
+	                            @RequestParam(defaultValue = "400") int maxWidth) {
 		return "https://maps.googleapis.com/maps/api/place/photo"
 				+ "?maxwidth=" + maxWidth
 				+ "&photo_reference=" + photoReference

@@ -13,49 +13,53 @@ import java.util.Map;
 @Service
 public class SearchService {
 
-  @Autowired
-  private SearchDao searchDao;
+	@Autowired
+	private SearchDao searchDao;
 
-  // 🔹 검색 기록 저장 및 인기 검색어 업데이트
-  @Transactional
-  public int saveSearch(Map<String, Object> sMap) {
-    log.info("🔍 saveSearch 호출 성공 | 파라미터: {}", sMap);
+	// 🔹 1. 최근 검색어 저장 (최대 5개 유지)
+	@Transactional
+	public int saveRecentSearch(int userNo, String searchTerm, String searchType) {
+		log.info("🔍 saveRecentSearch 호출 | userNo: {}, searchTerm: {}, searchType: {}", userNo, searchTerm, searchType);
 
-    // 🔹 사용자의 최근 검색어 가져오기
-    String lastSearchTerm = searchDao.getLastSearchTerm(sMap);
-    log.info("✅ 최근 검색어: {}", lastSearchTerm);
+		// 🔹 최근 검색어 저장
+		searchDao.saveRecentSearch(Map.of("userNo", userNo, "searchTerm", searchTerm, "searchType", searchType));
 
-    // 1. 검색 기록 저장
-    int result1 = searchDao.insertSearchHistory(sMap);
-    if (result1 != 1) {
-      throw new RuntimeException("❌ 검색 기록 저장 실패");
-    }
+		// 🔹 최근 검색어 5개 유지 (초과 시 삭제)
+		searchDao.deleteOldRecentSearches(userNo);
 
-    // 2. 인기 검색어 존재 여부 확인
-    int count = searchDao.checkPopularSearchExists(sMap);
+		log.info("✅ saveRecentSearch 완료");
+		return 1; // ✅ 성공 시 1 반환
+	}
 
-    int result2 = -1;
-    if (count > 0) {
-      // 3. 이미 존재하는 검색어면 검색 횟수 증가
-      result2 = searchDao.updatePopularSearchCount(sMap);
-    } else {
-      // 4. 존재하지 않는 검색어면 새로 추가
-      result2 = searchDao.insertPopularSearch(sMap);
-    }
+	// 🔹 2. 최근 검색어 조회 (최대 5개) ✅ `getRecentSearchList()` 메서드명 일치
+	public List<Map<String, Object>> getRecentSearchList(int userNo) {
+		log.info("🔍 getRecentSearchList 호출 | userNo: {}", userNo);
+		return searchDao.getRecentSearchList(userNo);
+	}
 
-    if (result2 != 1) {
-      throw new RuntimeException("❌ 인기 검색어 업데이트 실패");
-    }
+	// 🔹 3. 특정 최근 검색어 삭제
+	@Transactional
+	public int deleteRecentSearch(int userNo, String searchTerm) {
+		log.info("🔍 deleteRecentSearch 호출 | userNo: {}, searchTerm: {}", userNo, searchTerm);
+		return searchDao.deleteRecentSearch(Map.of("userNo", userNo, "searchTerm", searchTerm));
+	}
 
-    log.info("✅ saveSearch 완료");  // 🔹 무한 로딩 방지용 로그 추가
-    return 1; // ✅ 정상적으로 `1` 반환
-  }
+	// 🔹 4. 인기 검색어 업데이트 (검색할 때마다 호출)
+	@Transactional
+	public int updatePopularSearchCount(String searchTerm, String searchType) {
+		log.info("🔍 updatePopularSearchCount 호출 | searchTerm: {}, searchType: {}", searchTerm, searchType);
+		return searchDao.updatePopularSearchCount(Map.of("searchTerm", searchTerm, "searchType", searchType));
+	}
 
-  // 🔹 인기 검색어 조회
-  public List<Map<String, Object>> getPopularSearches() { // ✅ 반환 타입 수정 (List<Map<String, Object>>)
-    log.info("🔍 getPopularSearches 호출 성공");
-    List<Map<String, Object>> list = searchDao.getPopularSearches();
-    log.info("✅ 인기 검색어 개수: {}", (list != null ? list.size() : 0));
-    return list; // ✅ JSON 변환을 컨트롤러에서 수행
-  }
+	// 🔹 5. 인기 검색어 저장 (처음 검색할 때) ✅ 변경된 메서드명 적용
+	@Transactional
+	public int insertPopularSearch(String searchTerm, String searchType) {
+		log.info("🔍 insertPopularSearch 호출 | searchTerm: {}, searchType: {}", searchTerm, searchType);
+		return searchDao.insertPopularSearch(Map.of("searchTerm", searchTerm, "searchType", searchType));
+	}
+	// 🔹 6. 인기 검색어 조회 (TOP 10) ✅ 추가
+	public List<Map<String, Object>> getPopularSearchList() {
+		log.info("🔍 getPopularSearchList 호출");
+		return searchDao.getPopularSearchList();
+	}
 }
