@@ -91,8 +91,9 @@ public class TripBoardService {
 
    // 게시판 수정
    @Transactional
-   public int tripboardUpdate(TripBoard board, List<Map<String, Object>> details) {
+   public int tripboardUpdate(int tb_no, TripBoard board, List<Map<String, Object>> details) {
       log.info("tripboardUpdate 호출 성공");
+      board.setTb_no(tb_no);
       int result1 = -1;
       // 1. 게시글 정보 추출 및 수정
       result1 = tripBoardDao
@@ -100,8 +101,6 @@ public class TripBoardService {
       if (result1 !=1) {
          throw new RuntimeException("게시글 업데이트 실패");
       }
-
-      int tb_no = board.getTb_no();
 
       // 2. 기존 코스 삭제
       int result2 = -1;

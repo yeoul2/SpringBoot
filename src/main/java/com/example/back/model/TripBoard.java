@@ -16,7 +16,7 @@ public class TripBoard {
    private String tb_photo3            = "" ;   // 사진3
    private String tb_review            = "" ;   // 여행리뷰
    private String tb_public            = "" ;   // 공개설정("Y","N")
-   private int    tb_likes             = 0 ;    // 좋아요
+   private int    tb_like_count        = 0 ;    // 좋아요
    private String user_id              = "" ;   // 아이디
    private int    tb_participants      = 0 ;    // 여행인원
    private String tb_theme             = "" ;   // 테마

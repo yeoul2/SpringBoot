@@ -114,16 +114,12 @@
     <update id="tripboardUpdate" parameterType="com.example.back.model.TripBoard">
         UPDATE trip_board
         <set>
-            tb_up_date = CASE
-            WHEN tb_like_count = (SELECT tb_like_count FROM (SELECT * FROM trip_board) AS temp WHERE tb_no= ?)
-            THEN NOW()
-            ELSE tb_up_date
-            END,
             tb_title = #{tb_title},
             tb_country = #{tb_country},
             tb_star = #{tb_star},
             tb_review = #{tb_review},
-            tb_public = #{tb_public}
+            tb_public = #{tb_public},
+            tb_up_date = NOW()
             <if test="tb_departure_date != null"> ,tb_departure_date = #{tb_departure_date} </if>
             <if test="tb_return_date != null"> ,tb_return_date = #{tb_return_date} </if>
             <if test="tb_city != null"> ,tb_city = #{tb_city} </if>
@@ -133,7 +129,7 @@
             <if test="tb_participants != null"> ,tb_participants = #{tb_participants} </if>
             <if test="tb_theme != null"> ,tb_theme = #{tb_theme} </if>
         </set>
-        WHERE tb_no = #{tb_no}
+        WHERE tb_no = #{tb_no, jdbcType=INTEGER}
     </update>
 
     <!--게시글 삭제-->
