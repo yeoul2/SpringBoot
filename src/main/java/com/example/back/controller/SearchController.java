@@ -19,7 +19,7 @@ public class SearchController {
 	private final SearchService searchService;
 
 	// 🔹 1. 최근 검색어 저장 (로그인한 사용자만 가능)
-	@PostMapping("/recent-save")
+	@PostMapping("/recent_save")
   public ResponseEntity<String> saveRecentSearch(@RequestParam String searchTerm,
                                                  @RequestParam String searchType,
                                                  @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -31,7 +31,7 @@ public class SearchController {
   }
 
 	// 🔹 2. 최근 검색어 조회 (최대 5개)
-	@GetMapping("/recent-list")
+	@GetMapping("/recent_list")
 	public ResponseEntity<List<Map<String, Object>>> getRecentSearchList(@AuthenticationPrincipal CustomUserDetails userDetails) {
 		if (userDetails == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -40,7 +40,7 @@ public class SearchController {
 	}
 
 	// 🔹 3. 최근 검색어 삭제
-	@DeleteMapping("/recent-delete")
+	@DeleteMapping("/recent_delete")
 	public ResponseEntity<String> deleteRecentSearch(@RequestParam String searchTerm,
 	                                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
 		if (userDetails == null) {
@@ -51,7 +51,7 @@ public class SearchController {
 	}
 
 	// 🔹 4. 인기 검색어 업데이트 (검색할 때마다 호출, 모든 사용자 반영)
-	@PostMapping("/popular-update")
+	@PostMapping("/popular_update")
 	public ResponseEntity<String> updatePopularSearchCount(@RequestParam String searchTerm,
 	                                                       @RequestParam String searchType) {
 		searchService.updatePopularSearchCount(searchTerm, searchType);
@@ -59,7 +59,7 @@ public class SearchController {
 	}
 
 	// 🔹 5. 인기 검색어 조회 (TOP 10)
-	@GetMapping("/popular-list")
+	@GetMapping("/popular_list")
 	public ResponseEntity<List<Map<String, Object>>> getPopularSearchList() {
 		return ResponseEntity.ok(searchService.getPopularSearchList());
 	}
