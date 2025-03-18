@@ -49,7 +49,6 @@ protected void doFilterInternal(HttpServletRequest request, HttpServletResponse 
 
     try {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.warn("❌ Authorization 헤더 없음 또는 잘못된 형식: {}", authHeader);
             filterChain.doFilter(request, response);
             return;
         }

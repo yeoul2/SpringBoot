@@ -3,24 +3,22 @@ package com.example.back.service;
 import com.example.back.dao.UserDao;
 import com.example.back.model.JwtAuthenticationResponse;
 import com.example.back.model.RefreshTokenRequest;
-import com.example.back.model.Role;
 import com.example.back.model.SigninRequest;
 import com.example.back.model.SignupRequest;
 import com.example.back.model.User;
 import lombok.extern.log4j.Log4j2;
 
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Random;
 
 @Log4j2
-@Service //이 클래스가 Spring의 서비스 레이어 역할을 함 (Spring Bean으로 등록됨)
-@Repository
+@Service // 이 클래스가 Spring의 서비스 레이어 역할을 함 (Spring Bean으로 등록됨)
 public class AuthenticationService {
 
     private final UserDao userDao;
@@ -29,7 +27,8 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
 
     // ✅ 명확한 생성자 추가 (SecurityConfig에서 주입 가능하도록)
-    public AuthenticationService(UserDao userDao, JWTService jwtService, AuthenticationManager authenticationManager, PasswordEncoder passwordEncoder) {
+    public AuthenticationService(UserDao userDao, JWTService jwtService, AuthenticationManager authenticationManager,
+            PasswordEncoder passwordEncoder) {
         this.userDao = userDao;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
@@ -40,6 +39,7 @@ public class AuthenticationService {
         return userDao.userExists(user_email);
     }
 
+    // 사용자를 DB에서 찾기
     public JwtAuthenticationResponse signin(SigninRequest signinRequest) {
         log.info("🔑 로그인 시도: ID = {}", signinRequest.getUser_id());
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
@@ -49,6 +49,14 @@ public class AuthenticationService {
             log.warn("❌ 로그인 실패: 사용자 ID={}를 찾을 수 없음", signinRequest.getUser_id());
             throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
         }
+
+        // 2. 비밀번호 비교 - 여기서 matches() 사용
+        if (!passwordEncoder.matches(signinRequest.getUser_pw(), user.getUser_pw())) {
+            log.warn("❌ 로그인 실패: 비밀번호 불일치 (ID: {})", signinRequest.getUser_id());
+            throw new BadCredentialsException("비밀번호가 일치하지 않습니다.");
+        }
+
+        // 토큰 생성및 반환
         String jwt = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
         log.info("✅ 로그인 성공: ID = {}, JWT 발급 완료", signinRequest.getUser_id());
@@ -67,7 +75,7 @@ public class AuthenticationService {
         String refreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
         log.info("✅ OAuth 로그인 성공: Email = {}, JWT 발급 완료", user_email);
         return new JwtAuthenticationResponse(jwt, refreshToken, user.getUser_id(), user.getUser_email(),
-            user.getUser_name(), user.getUser_birth(), user.getUser_no(), user.getRole());
+                user.getUser_name(), user.getUser_birth(), user.getUser_no(), user.getRole());
     }
 
     public JwtAuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
@@ -94,6 +102,7 @@ public class AuthenticationService {
         String storedCode = userDao.findVerificationCodeByEmail(user_email);
         return storedCode != null && storedCode.equals(code);
     }
+
     // 🔹 새로운 인증 코드 생성
     public String generateVerificationCode() {
         return String.valueOf(new Random().nextInt(900000) + 100000); // 6자리 랜덤 숫자 생성

@@ -1,0 +1,89 @@
+package com.example.back.filter;
+
+import java.io.IOException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+import com.example.back.service.JWTService;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.micrometer.common.util.StringUtils;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
+@Component
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private final JWTService jwtService;
+    private final UserDetailsService userDetailsService; // ✅ UserService 대신 UserDetailsService 사용
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        String path = request.getRequestURI();
+        if (path.startsWith("/api/signup") || path.startsWith("/api/signin")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        final String authHeader = request.getHeader("Authorization");
+        log.info("🔍 [JwtAuthenticationFilter] 요청된 Authorization 헤더: {}", authHeader);
+        final String jwt;
+        final String userId;
+
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                log.warn("❌ Authorization 헤더 없음 또는 잘못된 형식: {}", authHeader);
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            jwt = authHeader.substring(7);
+            userId = jwtService.extractUserName(jwt);
+
+            log.info("✅ JWT 추출 완료 - UserID: {}", userId);
+
+            if (StringUtils.isNotEmpty(userId) && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
+
+                if (jwtService.isTokenExpired(jwt)) {
+                    log.warn("❌ 토큰 만료됨: {}", userId);
+                    SecurityContextHolder.clearContext();
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"message\": \"토큰이 만료되었습니다. 다시 로그인하세요.\"}");
+                    return;
+                }
+
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+                    UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities()
+                    );
+                    token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    securityContext.setAuthentication(token);
+                    SecurityContextHolder.setContext(securityContext);
+                    log.info("✅ JWT 인증 성공 - User: {}", userId);
+                }
+            }
+        } catch (ExpiredJwtException e) {
+            log.warn("❌ 토큰 만료됨");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"message\": \"토큰이 만료되었습니다. 다시 로그인하세요.\"}");
+            return;
+        }
+
+        filterChain.doFilter(request, response);
+    }
+}

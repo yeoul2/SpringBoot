@@ -5,7 +5,6 @@
 <mapper namespace="com.example.back.dao.UserDao">
 
     <!-- 사용자 아이디(user_id)로 찾기 -->
-    <!-- <select id="findByUsername" parameterType="string" resultType="com.example.back.model.User"> -->
     <select id="findByUsername" parameterType="java.lang.String" resultType="com.example.back.model.User">
         SELECT user_no, user_name, user_email, user_id, user_pw, user_birth, role
         FROM users
@@ -14,11 +13,30 @@
 
     <!-- 사용자 이메일(user_email)로 찾기 --> 
     <select id="findByEmail" parameterType="java.lang.String" resultType="com.example.back.model.User">
-    SELECT user_no, user_name, user_email, user_id, user_pw, user_birth, role
-    FROM users
-    WHERE user_email = #{user_email}
-    LIMIT 1
+        SELECT user_no, user_name, user_email, user_id, user_pw, user_birth, role
+        FROM users
+        WHERE user_email = #{user_email}
+        LIMIT 1
     </select>
+
+    <!-- 아이디 찾기 -->
+    <select id="findUserIdByNameAndEmail" parameterType="map" resultType="java.lang.String">
+        SELECT user_id 
+        FROM users 
+        WHERE user_name = #{user_name} 
+        AND user_email = #{user_email}
+    </select>
+
+    <!-- 비번 찾기 -->
+    <select id="findUserPwByIdAndEmail" parameterType="map" resultType="java.lang.Integer">
+        SELECT user_no FROM users  <!-- ✅ user_no만 가져오기 -->
+        WHERE user_id = #{user_id} AND user_email = #{user_email}
+    </select>
+
+    <!-- 비밀번호 업데이트 -->
+    <update id="updatePassword">
+        UPDATE users SET user_pw = #{user_pw} WHERE user_no = #{user_no}
+    </update>
 
     <!-- 아이디 중복 확인 (COUNT 사용) ✅ -->
     <select id="countByUserId" parameterType="java.lang.String" resultType="int">
@@ -48,16 +66,14 @@
         SELECT code FROM user_email_verification WHERE user_email = #{user_email} AND expired = false;
     </select>
 
-    <!-- 🔹 이메일 인증 여부 확인 (수정) -->
-    <select id="isEmailVerified" parameterType="java.lang.String" resultType="int">
-    SELECT COUNT(*) FROM user_email_verification WHERE user_email = #{user_email} AND expired = true;
-    <!-- SELECT COUNT(*) FROM user_email_verification WHERE user_email = #{user_email} AND expired = 1 -->
+    <!-- 이메일 인증 여부 확인 -->
+    <select id="isEmailVerified" parameterType="java.lang.String" resultType="boolean">
+        SELECT email_verified FROM users WHERE user_email = #{user_email} AND role = 'USER'
     </select>
 
-    <!-- 이메일 존재 여부 확인 role 기반 필터링 추가 -->
-    <select id="countByEmail" parameterType="java.lang.String" resultType="int" useCache="false">
-    <!-- SELECT COUNT(*) FROM users WHERE user_email = #{user_email} -->
-    SELECT COUNT(*) FROM users WHERE user_email = #{user_email} AND role = 'USER'
+    <!-- ✅ USER 계정 중복 확인 (role = 'USER'인 경우만) -->
+    <select id="countByEmail" parameterType="java.lang.String" resultType="int">
+        SELECT COUNT(*) FROM users WHERE user_email = #{user_email} AND role = 'USER'
     </select>
 
     <!-- 🔹 이메일 인증 상태 업데이트 -->
@@ -67,16 +83,8 @@
     WHERE user_email = #{user_email} 
     </update>
 
-    <!-- 같은 이메일을 가진 계정들의 Role 조회 -->
-    <select id="findRolesByEmail" resultType="string">
-    SELECT role FROM users WHERE user_email = #{user_email}
+    <!-- ✅ 같은 이메일을 가진 계정들의 Role 조회 -->
+    <select id="findRolesByEmail" parameterType="java.lang.String" resultType="string">
+        SELECT role FROM users WHERE user_email = #{user_email}
     </select>
-
-    <!-- 소셜 로그인의 경우 SNS로 들어와야함 -->
-    <!-- <update id="updateRoleByEmail" parameterType="com.example.back.model.User">
-    UPDATE users
-    SET role = #{role}
-    WHERE user_email = #{user_email}
-    </update>
--->
 </mapper>

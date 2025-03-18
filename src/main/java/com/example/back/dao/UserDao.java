@@ -18,9 +18,12 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Repository //이 클래스가 DAO 레이어임을 선언 (Spring이 Bean으로 관리)
 public class UserDao {
+    
     /* MyBatis의 SqlSessionTemplate을 사용하여 SQL을 실행할 수 있도록 자동 주입 */
+
     @Autowired
     private SqlSessionTemplate sqlSessionTemplate;
+    
     //리액트 로그인 화면에서 username과 비번을 입력했을 때 호출되는 메소드 입니다.
     public User findByUsername(@Param("user_id") String user_id) {
         log.info("🔍 사용자 조회 시도: " + user_id); // user_id가 제대로 전달되는지 확인
@@ -69,26 +72,20 @@ public class UserDao {
     // 이메일 인증 여부 확인
     public boolean isEmailVerified(String user_email) {
         log.info("이메일 인증 여부 확인: {}", user_email);
+        Boolean verified = sqlSessionTemplate.selectOne("isEmailVerified", user_email);
+        return verified != null && verified;
+        
+    }
 
-        //List<String> roles = sqlSessionTemplate.selectList("findRolesByEmail", user_email);
+    public int countByEmail(String user_email) {
+        log.info("🔍 이메일 중복 확인 (USER 계정 기준): {}", user_email);
+        return sqlSessionTemplate.selectOne("countByEmail", user_email);
+    }
 
-        Integer count = sqlSessionTemplate.selectOne("isEmailVerified", user_email);
-
-        boolean verified = count != null && count > 0;
-        log.info("✅ 이메일 인증 상태 (0: 인증 안 됨, 1 이상: 인증 완료) → verified: {}", verified);
-
-          // 기본 로그인(USER) 계정이 있으면 인증 필요
-        //boolean requiresVerification = roles.contains("USER");
-
-        /* if (!requiresVerification) {
-            log.info("✅ 이메일 인증 필요 없음 (SNS 계정만 존재)");
-            return true; // SNS 계정만 있으면 자동 인증 성공
-        }
-
-        int count = sqlSessionTemplate.selectOne("isEmailVerified", user_email);
-        log.info("✅ 이메일 인증 여부 (0: 인증 안 됨, 1 이상: 인증 완료) → count: {}", count); */
-
-        return verified;
+    public boolean isEmailRegistered(String user_email) {
+        log.info("🔍 이메일 중복 확인 (USER 계정 기준): {}", user_email);
+        int count = sqlSessionTemplate.selectOne("countByEmail", user_email);
+        return count > 0;
     }
 
     // 이메일 인증 완료 시 `expired` 값을 true로 변경
@@ -97,12 +94,6 @@ public class UserDao {
     sqlSessionTemplate.update("updateVerificationStatus", user_email);
     }
 
-    //이메일이 DB에 존재하는지 확인
-
-    public List<String> findRolesByEmail(String user_email) {
-        log.info("🔍 이메일에 대한 Role 조회: {}", user_email);
-        return sqlSessionTemplate.selectList("findRolesByEmail", user_email);
-    }
 
     // 이메일이 DB에 존재하는지 확인 (Role 기반 검사 추가)
     public boolean userExists(String user_email) {
@@ -115,22 +106,25 @@ public class UserDao {
     return exists;
     }
 
+    // ✅ 해당 이메일이 USER 역할을 가진 계정이 존재하는지 확인
+    public boolean hasUserRoleByEmail(String user_email) {
+        log.info("🔍 같은 이메일로 USER 계정 존재 여부 확인: {}", user_email);
+        int count = sqlSessionTemplate.selectOne("countByEmail", user_email);
+        return count > 0;  // 1개 이상이면 USER 계정이 존재함
+    }
 
-    /* public boolean userExists(String user_email) {
-        log.info("🔍 이메일 존재 여부 확인: {}", user_email);
+    // ✅ 해당 이메일의 모든 Role 조회 (기존 findRolesByEmail 활용)
+    public List<String> findRolesByEmail(String user_email) {
+        log.info("🔍 이메일에 대한 Role 조회: {}", user_email);
+        return sqlSessionTemplate.selectList("findRolesByEmail", user_email);
+    }
 
-        // 같은 이메일을 가진 모든 계정 조회
-        List<String> roles = sqlSessionTemplate.selectList("findRolesByEmail", user_email);
-
-        // 기본로그인(USER) 가 있다면 중복메일로 처리
-        boolean exists = roles.contains("USER");
-
-        //int count = sqlSessionTemplate.selectOne("countByEmail", user_email);
-        //log.info("✅ 이메일 존재 여부 (0: 없음, 1 이상: 존재) → count: {}", count);
-
-        log.info("이메일 존재 여부(0: 없음 1 이상: 존재) -> exists: {}", exists);
-        return exists;
-    } */
+    // ✅ 해당 이메일이 인증 완료(`expired = true`) 상태인지 확인
+    public boolean isEmailExpired(String user_email) {
+        log.info("🔍 이메일 인증 완료 여부 확인: {}", user_email);
+        String code = sqlSessionTemplate.selectOne("findVerificationCodeByEmail", user_email);
+        return code == null;  // 인증 코드가 없으면 이미 만료된 것
+    }
 
     // 아이디 중복검사
     public boolean isUsernameAvailable(@Param("user_id") String user_id) {
@@ -149,12 +143,58 @@ public class UserDao {
     return sqlSessionTemplate.insert("userInsert", signupRequest);
     }
 
-     // 기존 사용자의 role을 SNS로 업데이트
-        public void updateRoleByEmail(String userEmail, String role) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("user_email", userEmail);
-        params.put("role", role);
+    // 아이디찾기
+    public String findUserIdByNameAndEmail(String user_name, String user_email){
+        Map<String, String> params = new HashMap<>();
+        params.put("user_name", user_name);
+        params.put("user_email", user_email);
 
-        sqlSessionTemplate.update("updateRoleByEmail", params);  // MyBatis update 쿼리 호출
+        String userId = sqlSessionTemplate.selectOne("findUserIdByNameAndEmail", params);
+        
+        if (userId != null) {
+            log.info("🔍 [UserDao] 찾은 아이디: {}", userId);
+        } else {
+            log.warn("❌ [UserDao] 일치하는 아이디를 찾을 수 없음");
+        }
+    
+        return sqlSessionTemplate.selectOne("findUserIdByNameAndEmail", params);
+    }
+
+    //비번 찾기 
+    public Integer findUserPwByIdAndEmail (String user_id, String user_email) {
+        Map<String, String> params = new HashMap<>();
+        params.put("user_id", user_id);
+        params.put("user_email", user_email);
+
+        Integer userNo = sqlSessionTemplate.selectOne("findUserPwByIdAndEmail", params);
+
+        if (userNo != null) {
+            log.info("🔍 [UserDao] 찾은 사용자 번호: {}", userNo);
+        } else {
+            log.warn("⚠ [UserDao] 일치하는 계정이 없습니다.");
+        }
+
+        return userNo;
+    }
+
+    // 비밀번호 업데이트
+    public void updatePassword(Integer user_no, String encryptedPassword){
+
+        if (user_no == null || user_no == -1) {
+            log.error("❌ 비밀번호 업데이트 실패: 유효하지 않은 user_no ({})", user_no);
+            return;  // user_no가 잘못된 경우 업데이트 실행하지 않음
+        }
+
+        Map<String, Object> parmas = new HashMap<>();
+        parmas.put("user_no", user_no);
+        parmas.put("user_pw", encryptedPassword);
+
+        int result = sqlSessionTemplate.update("updatePassword", parmas);
+
+        if(result > 0) {
+            log.info("🔍 비밀번호 업데이트 성공 (user_no: {})", user_no);
+        }else {
+            log.info("🔍 비밀번호 업데이트 실패 (user_no: {})", user_no);
+        }
     }
 }
