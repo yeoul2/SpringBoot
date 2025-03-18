@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.back.dao.SearchDao">
+
+    <!-- 🔹 1. 최근 검색어 저장 -->
+    <insert id="saveRecentSearch">
+        INSERT INTO recent_searches (user_no, search_term, search_type)
+        VALUES (#{userNo}, #{searchTerm}, #{searchType});
+    </insert>
+
+    <!-- 🔹 2. 최근 검색어 조회 (최대 5개) -->
+    <select id="getRecentSearchList" resultType="map">
+        SELECT *
+        FROM recent_searches
+        WHERE user_no = #{userNo}
+        ORDER BY search_date DESC LIMIT 5;
+    </select>
+
+    <!-- 🔹 3. 특정 최근 검색어 삭제 -->
+    <delete id="deleteRecentSearch">
+        DELETE
+        FROM recent_searches
+        WHERE user_no = #{userNo}
+          AND search_term = #{searchTerm};
+    </delete>
+
+    <!-- 🔹 4. 인기 검색어 조회 (TOP 10) -->
+    <select id="getPopularSearchList" resultType="map">
+        SELECT *
+        FROM popular_searches
+        ORDER BY search_count DESC LIMIT 10;
+    </select>
+
+    <!-- 🔹 5. 인기 검색어 검색 횟수 증가 ✅ 추가 -->
+    <update id="updatePopularSearchCount">
+        UPDATE popular_searches
+        SET search_count = search_count + 1
+        WHERE search_term = #{searchTerm}
+          AND search_type = #{searchType};
+    </update>
+
+    <!-- 🔹 6. 인기 검색어 저장 (신규 등록) ✅ `updatePopularSearch` → `insertPopularSearch`로 변경 -->
+    <insert id="insertPopularSearch">
+        INSERT INTO popular_searches (search_term, search_type, search_count)
+        VALUES (#{searchTerm}, #{searchType}, 1) ON DUPLICATE KEY
+        UPDATE search_count = search_count + 1;
+    </insert>
+
+</mapper>

@@ -1,14 +1,13 @@
 package com.example.back.model;
 
-import java.util.Collection;
-import java.util.List;
-
+import lombok.Data;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import lombok.Data;
-import lombok.extern.log4j.Log4j2;
+import java.util.Collection;
+import java.util.List;
 
 
 //스프링 시큐리티에서는 일반 클래스는 담을 수가 없다.
@@ -57,6 +56,11 @@ public class User implements UserDetails {
 	@Override
 	public String getUsername() {
 		return user_id;
+	}
+
+	// ✅ `CustomUserDetails`에서 필요하므로 추가 (Lombok이 자동 생성)
+	public int getUserNo() {
+		return user_no;
 	}
     
 }

@@ -14,35 +14,35 @@ import com.example.back.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
-
-@Service
 @Log4j2
+@Service
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserDao userDao;
+	private final UserDao userDao;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
-    public UserDetailsService userDetailsService() {
-        return username -> {
-            UserDetails userDetails = userDao.findByUsername(username);
-            if(userDetails == null) {
-                throw new UsernameNotFoundException("❌ 해당 유저가 없습니다: " + username);
-            }
-            return userDetails;
-        };
-    }
+	// 🔹 UserDetailsService 메서드 정의
+	public UserDetailsService userDetailsService() {
+		return username -> {
+			UserDetails userDetails = userDao.findByUsername(username);
+			if (userDetails == null) {
+				throw new UsernameNotFoundException("❌ 해당 유저가 없습니다: " + username);
+			}
+			return userDetails;
+		};
+	}
 
-    // ✅ 사용자 정보를 반환하는 메서드 추가 (AuthController에서 필요)
-    public User findByUsername(String userId) {
-        return userDao.findByUsername(userId); // ✅ UserDao에서 데이터 조회
-    }
+	// ✅ 사용자 정보를 반환하는 메서드 추가 (AuthController에서 필요)
+	public User findByUsername(String userId) {
+		return userDao.findByUsername(userId); // ✅ UserDao에서 데이터 조회
+	}
 
-    // 아이디 중복 확인 메서드
-    public boolean isUsernameAvailable(String userId) {
-        return userDao.isUsernameAvailable(userId);
-    }
+	// 아이디 중복 확인 메서드
+	public boolean isUsernameAvailable(String userId) {
+		return userDao.isUsernameAvailable(userId);
+	}
 
     // ✅ 이메일 중복 여부 확인 (USER 계정 기준)
     public boolean isEmailDuplicated(String userEmail) {

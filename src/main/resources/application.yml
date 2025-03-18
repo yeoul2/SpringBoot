@@ -100,6 +100,10 @@ spring:
       auto-commit: true
       pool-name: HikariCP
 
+google:
+  places:
+    api-key: AIzaSyDzcuFvvgFd-iNVJ48s4dToutKtTJpQKDw  # ✅ Google Places API 키 추가
+
 logging:
   pattern:
     console: "${LOGPATTERN_CONSOLE:%green(%d{HH:mm:ss.SSS}) %blue(%-5level) %red([%thread]) %yellow(%logger{15}:%line)-%msg%n}"
