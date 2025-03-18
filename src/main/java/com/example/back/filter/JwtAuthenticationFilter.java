@@ -35,7 +35,6 @@ protected void doFilterInternal(HttpServletRequest request, HttpServletResponse 
         throws ServletException, IOException {
     // 인증이 필요 없는 경로는 바로 지나가게 처리
     String path = request.getRequestURI();
-    //if (path.startsWith("/api/v1/auth/signup") || path.startsWith("/api/v1/auth/signin")) {
     if (path.startsWith("/api/signup") || path.startsWith("/api/signin")) {
         filterChain.doFilter(request, response);  // 인증 없이 그냥 요청을 처리
         return;

@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.example.back.model.User;
+
 import java.security.Key;
 import java.util.Date;
 import java.util.Map;
@@ -26,14 +28,16 @@ public class JWTService {
     @Value("${spring.security.jwt.expiration}") // ✅ 만료 시간 가져오기
     private long expiration;
 
-    /* @Value("${spring.security.jwt.refresh-expiration}") // ✅ 리프레시 토큰 만료 시간 추가
-    private long refreshExpiration; */
+    /*
+     * @Value("${spring.security.jwt.refresh-expiration}") // ✅ 리프레시 토큰 만료 시간 추가
+     * private long refreshExpiration;
+     */
 
     @PostConstruct
     public void logSecretKey() {
         log.info("✅ Loaded JWT Secret Key: " + secretKey);
         log.info("✅ JWT Expiration Time: " + expiration);
-        //log.info("✅ Refresh Token Expiration Time: " + refreshExpiration);
+        // log.info("✅ Refresh Token Expiration Time: " + refreshExpiration);
     }
 
     public String generateToken(UserDetails userDetails) {
@@ -55,12 +59,10 @@ public class JWTService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 7)) // 7일
-                //.setExpiration(new Date(System.currentTimeMillis() + refreshExpiration)) 
+                // .setExpiration(new Date(System.currentTimeMillis() + refreshExpiration))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
-
-    
 
     public String extractUserName(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -85,24 +87,32 @@ public class JWTService {
                 .getBody();
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUserName(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-        
-        //return extractClaim(token, Claims::getExpiration).before(new Date());
-    }
-
+    // ✅ 토큰이 만료되었는지 확인하는 메서드 추가
     public boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
+    // ✅ User 타입을 받는 기존 메서드
+    public boolean isTokenValid(String token, User user) {
+        final String username = extractUserName(token);
+        return (username.equals(user.getUser_name()) && !isTokenExpired(token)); // 🔥 이제 오류 안 남!
+    }
+
+    // ✅ UserDetails 타입도 받을 수 있도록 오버로드 추가
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String username = extractUserName(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token)); // 🔥 이제 오류 안 남!
+    }
+
     // 리프레시 토큰 만료 여부 확인
-    /* public boolean isRefreshTokenExpired(String refreshToken) {
-        try {
-            return extractClaim(refreshToken, Claims::getExpiration).before(new Date());
-        } catch (Exception e) {
-            log.error("❌ 리프레시 토큰 검증 실패: {}", e.getMessage());
-            return true; // 예외 발생 시 만료된 것으로 처리
-        }
-    } */
+    /*
+     * public boolean isRefreshTokenExpired(String refreshToken) {
+     * try {
+     * return extractClaim(refreshToken, Claims::getExpiration).before(new Date());
+     * } catch (Exception e) {
+     * log.error("❌ 리프레시 토큰 검증 실패: {}", e.getMessage());
+     * return true; // 예외 발생 시 만료된 것으로 처리
+     * }
+     * }
+     */
 }

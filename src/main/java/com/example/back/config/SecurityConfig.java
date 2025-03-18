@@ -20,7 +20,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -37,6 +36,7 @@ public class SecurityConfig {
     private final UserService userService;
     private final UserDao userDao;
     private final JWTService jwtService;
+    private final PasswordEncoder passwordEncoder;
     private final AuthenticationConfiguration authenticationConfiguration;
 
     // ✅ AuthenticationManager를 Bean으로 등록
@@ -57,7 +57,7 @@ public class SecurityConfig {
     public OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler(AuthenticationService authenticationService) {
         return new OAuth2LoginSuccessHandler(authenticationService);
     }
-
+    
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationService authenticationService) throws Exception {
     http
@@ -103,12 +103,7 @@ public class SecurityConfig {
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
         authenticationProvider.setUserDetailsService(userService.userDetailsService());
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        authenticationProvider.setPasswordEncoder(passwordEncoder);
         return authenticationProvider;
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    } 
 }

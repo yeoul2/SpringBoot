@@ -2,6 +2,8 @@ server:
   port: 7007
 
 spring:
+  mvc:
+    static-path-pattern: "/static/**"  # ✅ 정적 리소스 경로 설정
   web:
     resources:
       static-locations: classpath:/static/, classpath:/public/, classpath:/resources/, classpath:/META-INF/resources/

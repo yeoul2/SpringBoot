@@ -86,17 +86,7 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
         }
 
         try {
-
-            // 테스트중 
-
-             // 기존 사용자 확인
-            //User existingUser = userService.findByEmail(user_email);  // 이메일로 기존 사용자 조회
-            //if (existingUser != null) {
-            // 기존 사용자가 있으면 role을 SNS로 업데이트
-            //userDao.updateRoleByEmail(user_email, "SNS");  // 직접 UserDao를 통해 role 업데이트
-
-            // 테스트 중
-
+            
             JwtAuthenticationResponse jwtResponse = authenticationService.createJwtForOAuthUser(user_email);
             log.info("✅ {} JWT 발급 완료 - Email: {}", provider, user_email);
             redirectUser(response, jwtResponse, provider);
