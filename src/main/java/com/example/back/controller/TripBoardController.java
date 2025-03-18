@@ -62,7 +62,7 @@ public class TripBoardController {
 
    // 후기 등록
    @PostMapping("tripboardInsert")
-   public int tripboardInsert(@RequestBody Map<String, Object> requestData) {
+   public int tripboardInsert(@RequestBody List<Map<String, Object>> requestData) {
       log.info("tripboardInsert 호출 성공");
       if (requestData.size() < 2) {
          throw new RuntimeException("올바른 데이터 형식이 아닙니다.");
@@ -70,28 +70,24 @@ public class TripBoardController {
       // 첫 번째 객체: 게시글 정보
       Gson gson = new Gson();
       // 게시글 정보 (TripBoard 객체로 변환)
-      TripBoard board = gson.fromJson(gson.toJson(requestData), TripBoard.class);
+      TripBoard board = gson.fromJson(gson.toJson(requestData.get(0)), TripBoard.class);
 
-      // 코스 리스트 (LinkedHashMap → List 변환)
-      Object courseObj = requestData.get("course");
+      // 두 번째 객체: 코스 리스트 변환
+      List<Map<String, Object>> details = (List<Map<String, Object>>) requestData.get(1).get("course");
 
-      List<Map<String, Object>> details;
-      if (courseObj instanceof List) {
-         details = (List<Map<String, Object>>) courseObj;
-      } else {
-         String json = gson.toJson(courseObj); // LinkedHashMap을 JSON 문자열로 변환
-         details = gson.fromJson(json, List.class); // JSON을 List<Map<String, Object>>로 변환
-      }
+      log.info("📌 변환된 게시글 정보: " + board);
+      log.info("📌 변환된 코스 리스트: " + details);
 
-      log.info("📌 변환된 코스 리스트: " + details); // ✅ 디버깅용 로그 추가
       // 게시글과 코스를 함께 저장
       return tripBoardService.tripboardInsert(board, details);
    }
 
    // 후기 수정
-   @PutMapping("tripboardUpdate")
-   public int tripboardUpdate(@RequestBody List<Map<String, Object>> requestData) {
+   @PutMapping("tripboardUpdate/{tb_no}")
+   public int tripboardUpdate(@PathVariable int tb_no, @RequestBody List<Map<String, Object>> requestData) {
       log.info("boardUpdate호출 성공");
+      log.info("tb_no: " + tb_no);
+      log.info("requestData: " + requestData);
       if (requestData.size() < 2) {
          throw new RuntimeException("올바른 데이터 형식이 아닙니다.");
       }
@@ -102,7 +98,7 @@ public class TripBoardController {
       List<Map<String, Object>> details = (List<Map<String, Object>>) requestData.get(1).get("course");
 
       // 게시글과 코스를 함께 저장
-      return tripBoardService.tripboardUpdate(board, details);
+      return tripBoardService.tripboardUpdate(tb_no,board, details);
    }
 
    // 후기 삭제
