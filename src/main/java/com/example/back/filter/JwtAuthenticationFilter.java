@@ -24,22 +24,21 @@ import java.io.IOException;
 //OncePerRequestFilter를 상속 받아 요청 당 한 번씩 필터가 실행되도록 보장합니다.
 //스프링에서는 setter객체 주입법과 생성자 객체 주입법이 있다.
 @Log4j2
-@Component //이 클래스를 스프링 빈으로 등록. 다른 컴포넌트 설정에서 주입받아 사용이 가능함.
-@RequiredArgsConstructor //final로 선언된 필드에 대한 생성자를 자동으로 생성하여 의존성 주입을 해줌.
+@Component // 이 클래스를 스프링 빈으로 등록. 다른 컴포넌트 설정에서 주입받아 사용이 가능함.
+@RequiredArgsConstructor // final로 선언된 필드에 대한 생성자를 자동으로 생성하여 의존성 주입을 해줌.
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private final JWTService jwtService;
 	private final UserService userService;
 
-	//이 필터의 핵심 메소드이다. - 핵심로직을 수행하는 메소드이다.
-	//요청이 들어올 때 마다 실행이 됨.
+	// 이 필터의 핵심 메소드이다. - 핵심로직을 수행하는 메소드이다.
+	// 요청이 들어올 때 마다 실행이 됨.
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 		// 인증이 필요 없는 경로는 바로 지나가게 처리
 		String path = request.getRequestURI();
-		//if (path.startsWith("/api/v1/auth/signup") || path.startsWith("/api/v1/auth/signin")) {
 		if (path.startsWith("/api/signup") || path.startsWith("/api/signin")) {
-			filterChain.doFilter(request, response);  // 인증 없이 그냥 요청을 처리
+			filterChain.doFilter(request, response); // 인증 없이 그냥 요청을 처리
 			return;
 		}
 
@@ -81,8 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				if (jwtService.isTokenValid(jwt, userDetails)) {
 					SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
 					UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
-							userDetails, null, userDetails.getAuthorities()
-					);
+							userDetails, null, userDetails.getAuthorities());
 					token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 					securityContext.setAuthentication(token);
 					SecurityContextHolder.setContext(securityContext);
@@ -93,7 +91,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			log.warn("❌ [토큰 만료됨] JWT가 만료되었습니다.");
 
 			// ✅ SecurityContext 초기화 (로그아웃 효과)
-			//SecurityContextHolder.clearContext();
+			// SecurityContextHolder.clearContext();
 
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			response.setContentType("application/json");
@@ -104,8 +102,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		filterChain.doFilter(request, response);
 	}
 
-
-}//end of JwtAuthenticationFilter
+}// end of JwtAuthenticationFilter
 /*
  * 1. Authorization 헤더 처리
  *

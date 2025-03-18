@@ -14,36 +14,49 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EmailService {
 
-    private final MailConfig mailConfig;  // MailConfig 주입
+    private final MailConfig mailConfig;  // ✅ MailConfig 주입
 
+    // ✅ 이메일 도메인에 따라 적절한 SMTP 제공업체 선택 (자동 결정)
+    public String determineProvider(String userEmail) {
+        if (userEmail.endsWith("@naver.com")) {
+            return "naver";
+        } else if (userEmail.endsWith("@gmail.com")) {
+            return "gmail";
+        } else {
+            return "gmail"; // 기본 제공업체를 Gmail로 설정
+        }
+    }
+
+    // ✅ 기본 메일 제공업체(Gmail)로 전송
+    public void sendEmail(String to, String subject, String text) {
+        String provider = determineProvider(to); // 수신자 이메일에 맞는 smtp 선택
+        sendEmail(provider, to, subject, text); // 기본 제공업체를 Gmail로 설정
+    }
+
+    // ✅ 특정 제공업체(Naver, Kakao 등) 선택 가능
     public void sendEmail(String provider, String to, String subject, String text) {
-        try {
-            log.info("📩 이메일 전송 요청 - 제공업체: {}, 받는 사람: {}", provider, to);
+            try {
+                log.info("📩 이메일 전송 요청 - 제공업체: {}, 받는 사람: {}", provider, to);
 
-            JavaMailSender mailSender = mailConfig.getMailSender(provider);  // MailConfig 사용
-
-            // JavaMailSender를 JavaMailSenderImpl로 캐스팅하여 getUsername() 사용 가능
-            // 메일을 보내는 계정의 이메일 주소가 반환됨
+            JavaMailSender mailSender = mailConfig.getMailSender(provider);
             String fromEmail = ((JavaMailSenderImpl) mailSender).getUsername();
 
-            // 이메일 내용을 구성
+            // 이메일 내용 구성
             MimeMessage message = mailSender.createMimeMessage();
-            // 이메일을 편리하게 구성 
             MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
 
-            helper.setFrom(fromEmail); // 발신자
-            helper.setTo(to); // 수신자
-            helper.setSubject(subject); // 제목 
-            helper.setText(text); // 본문 내용
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(text);
 
-            // 이메일 전송
             mailSender.send(message);
 
             log.info("✅ 이메일 전송 완료 - 제공업체: {}, 받는 사람: {}", provider, to);
 
-        } catch (Exception e) {
-            log.error("❌ 이메일 전송 실패 - 제공업체: {}, 오류: {}", provider, e.getMessage());
-            throw new RuntimeException("이메일 전송 중 오류 발생: " + e.getMessage(), e);
+            } catch (Exception e) {
+                log.error("❌ 이메일 전송 실패 - 제공업체: {}, 오류: {}", provider, e.getMessage());
+                throw new RuntimeException("이메일 전송 중 오류 발생: " + e.getMessage(), e);
+            }
         }
-    }
 }

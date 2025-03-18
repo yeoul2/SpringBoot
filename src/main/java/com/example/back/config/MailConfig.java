@@ -29,6 +29,7 @@ public class MailConfig {
         return new JavaMailSenderImpl();
     }
 
+
     // 메일 제공업체(Gmail 또는 Naver)에 따라 적절한 설정 메소드
     public JavaMailSender getMailSender(String provider) {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();

@@ -26,15 +26,17 @@ public class CourseDao {
       }
 
       // ✅ 특정 코스 상세 조회
-      public Map<String, Object> getCourseDetail(int cs_no) {
-            log.info("getCourseDetail 호출 성공");
-            return sqlSessionTemplate.selectOne("com.example.back.dao.CourseDao.getCourseDetail", cs_no);
+      public List<Map<String, Object>> courseDetail(Map<String, Object> cmap) {
+            log.info("courseDetail 호출 성공");
+            List<Map<String, Object>> clist = null;
+            clist = sqlSessionTemplate.selectList("com.example.back.dao.CourseDao.courseDetail", cmap);
+            return clist;
       }
 
       // ✅ 코스 추가
-      public int insertCourse(Course course) {
-            log.info("insertCourse 호출 성공");
-            int result = sqlSessionTemplate.insert("com.example.back.dao.CourseDao.insertCourse", course);
+      public int courseInsert(Course course) {
+            log.info("courseInsert 호출 성공");
+            int result = sqlSessionTemplate.insert("com.example.back.dao.CourseDao.courseInsert", course);
             log.info("추가된 코스 번호: " + course.getCs_no());
             return result > 0 ? course.getCs_no() : -1;
       }
@@ -50,24 +52,17 @@ public class CourseDao {
       /* ✅ 코스 상세 정보 (cs_detail 관련) */
 
       // ✅ 특정 코스의 상세 정보 조회
-      public List<Map<String, Object>> getCourseDetails(int cs_no) {
-            log.info("getCourseDetails 호출 성공");
-            return sqlSessionTemplate.selectList("com.example.back.dao.CourseDao.getCourseDetails", cs_no);
+      public List<Map<String, Object>> courseDetails(Map<String, Object> cmap) {
+            log.info("courseDetails 호출 성공");
+            List<Map<String, Object>> clist = sqlSessionTemplate.selectList("com.example.back.dao.CourseDao.courseDetails", cmap);
+            return clist;
       }
 
       // ✅ 코스 상세 정보 추가
-      public int insertCourseDetail(Map<String, Object> courseDetail) {
-            log.info("insertCourseDetail 호출 성공");
-            int result = sqlSessionTemplate.insert("com.example.back.dao.CourseDao.insertCourseDetail", courseDetail);
+      public int courseInsertDetail(Map<String, Object> courseDetail) {
+            log.info("courseInsertDetail 호출 성공");
+            int result = sqlSessionTemplate.insert("com.example.back.dao.CourseDao.courseInsertDetail", courseDetail);
             return result;
       }
 
-
-      // ✅ 코스 상세 정보 삭제
-      public int deleteCourseDetails(int cs_no) {
-            log.info("deleteCourseDetails 호출 성공");
-            int result = sqlSessionTemplate.delete("com.example.back.dao.CourseDao.deleteCourseDetails", cs_no);
-            log.info("삭제된 상세 정보 개수: " + result);
-            return result;
-      }
 }

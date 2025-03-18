@@ -28,12 +28,12 @@
    </select>
 
    <!-- ✅ 특정 코스 조회 -->
-   <select id="getCourseDetail" resultType="map">
+   <select id="courseDetail" resultType="map">
       SELECT * FROM course WHERE cs_no = #{cs_no}
    </select>
 
    <!-- ✅ 코스 추가 -->
-   <insert id="insertCourse" parameterType="com.example.back.model.Course" useGeneratedKeys="true" keyProperty="cs_no">
+   <insert id="courseInsert" parameterType="com.example.back.model.Course" useGeneratedKeys="true" keyProperty="cs_no">
       INSERT INTO course
       <trim prefix="(" suffix=")" suffixOverrides=",">
          user_id, cs_name, cs_country, cs_city, cs_like_count
@@ -58,18 +58,19 @@
    </delete>
 
    <!-- ✅ 코스 상세 조회 -->
-   <select id="courseDetailList" resultType="map">
+   <select id="courseDetails" resultType="map">
       SELECT * FROM cs_detail WHERE cs_no = #{cs_no} ORDER BY cdt_no
    </select>
 
    <!-- ✅ 코스 상세 추가 -->
-   <insert id="insertCourseDetail" parameterType="map">
+   <insert id="courseInsertDetail" parameterType="map">
       INSERT INTO cs_detail
       <trim prefix="(" suffix=")" suffixOverrides=",">
          cs_no, cdt_place, cdt_day
          <if test="cdt_place_type != null"> ,cdt_place_type </if>
          <if test="cdt_time_car != null"> ,cdt_time_car </if>
          <if test="cdt_time_public != null"> ,cdt_time_public </if>
+         <if test="cdt_time != null"> ,cdt_time </if> <!-- ✅ 추가된 부분 -->
       </trim>
       VALUES
       <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -77,12 +78,8 @@
          <if test="cdt_place_type != null"> ,#{cdt_place_type} </if>
          <if test="cdt_time_car != null"> ,#{cdt_time_car} </if>
          <if test="cdt_time_public != null"> ,#{cdt_time_public} </if>
+         <if test="cdt_time != null"> ,#{cdt_time} </if> <!-- ✅ 추가된 부분 -->
       </trim>
    </insert>
-
-   <!-- ✅ 코스 상세 삭제 -->
-   <delete id="deleteCourseDetails">
-      DELETE FROM cs_detail WHERE cs_no = #{cs_no}
-   </delete>
 
 </mapper>
