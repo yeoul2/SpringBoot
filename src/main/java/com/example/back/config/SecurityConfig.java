@@ -48,7 +48,7 @@ public class SecurityConfig {
 	/* AuthenticationService를 Bean으로 등록하여 의존성 주입을 가능하게 함 */
 	@Bean
 	public AuthenticationService authenticationService(AuthenticationManager authenticationManager,
-			PasswordEncoder passwordEncoder) {
+	                                                   PasswordEncoder passwordEncoder) {
 		return new AuthenticationService(userDao, jwtService, authenticationManager, passwordEncoder);
 	}
 
@@ -70,8 +70,9 @@ public class SecurityConfig {
 						.requestMatchers("/oauth2/**").permitAll() // OAuth2 관련 경로 허용
 						.requestMatchers("/api/search/**").permitAll() // 검색 API 경로 허용
 						.requestMatchers("/api/places/**").permitAll() // Places API 경로 허용
+						.requestMatchers("/api/**").permitAll() // Places API 경로 허용
 						.requestMatchers("/api/check").authenticated() // 🔥 인증된 사용자만 접근 가능
-						.requestMatchers("/api/**").authenticated() // JWT 인증 필요
+//						.requestMatchers("/api/**").authenticated() // JWT 인증 필요
 						.requestMatchers("/oauth2/authorization/**").permitAll() // ✅ OAuth2 로그인 엔드포인트 허용
 						.requestMatchers("/oauth/naver/callback").permitAll() // 네이버 콜백 허용
 						.requestMatchers("/oauth/google/callback").permitAll() // 구글 콜백 허용

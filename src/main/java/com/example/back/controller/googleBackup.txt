@@ -22,20 +22,20 @@ import java.util.Map;
 @RequestMapping("/api/places")
 public class GooglePlacesController {
 
-	private final WebClient webClient = WebClient.builder()
-			.baseUrl("https://maps.googleapis.com/maps/api")
-			.defaultHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-			.defaultHeader(HttpHeaders.ACCEPT, "application/json")
-			.defaultHeader(HttpHeaders.ACCEPT_LANGUAGE, "ko")
-			.build();
+  private final WebClient webClient = WebClient.builder()
+      .baseUrl("https://maps.googleapis.com/maps/api")
+      .defaultHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+      .defaultHeader(HttpHeaders.ACCEPT, "application/json")
+      .defaultHeader(HttpHeaders.ACCEPT_LANGUAGE, "ko")
+      .build();
 
-	private final RestTemplate restTemplate = new RestTemplate();
+  private final RestTemplate restTemplate = new RestTemplate();
 
-	@Value("${google.places.api-key}")
-	private String apiKey;
+  @Value("${google.places.api-key}")
+  private String apiKey;
 
   /**
-   * 🔹 1. 자동완성 (Autocomplete)
+   * 🔹 1. 자동완성 (Autocomplete) - 중복 예외 처리 제거
    */
   @GetMapping("/autocomplete")
   public Mono<String> getAutocomplete(@RequestParam String input) {
@@ -47,22 +47,16 @@ public class GooglePlacesController {
             .queryParam("key", apiKey)
             .build())
         .retrieve()
-        .onStatus(status -> status.isError(), clientResponse ->
-            clientResponse.bodyToMono(String.class).flatMap(errorBody -> {
-              System.err.println("❌ API 오류 발생: " + errorBody);
-              return Mono.error(new RuntimeException("Google API 오류: " + errorBody));
-            })
-        )
         .bodyToMono(String.class);
   }
 
   /**
-   * 🔹 2. 장소 검색 (Nearby Search)
+   * 🔹 2. 장소 검색 (Nearby Search) - 'type' 기본값 추가
    */
   @GetMapping("/nearby_search")
   public Mono<String> getNearbySearch(@RequestParam String location,
                                       @RequestParam int radius,
-                                      @RequestParam String type) {
+                                      @RequestParam(required = false, defaultValue = "tourist_attraction") String type) {
     return webClient.get()
         .uri(uriBuilder -> uriBuilder
             .path("/place/nearbysearch/json")
@@ -93,60 +87,46 @@ public class GooglePlacesController {
   }
 
   /**
-   * 🔹 4. 장소 사진 조회 (Place Photos) - place_id 기반으로 자동 photo_reference 조회
+   * 🔹 4. 장소 사진 조회 (Place Photos) - photo_reference 캐싱 최적화
    */
   @GetMapping("/place_photo")
   public ResponseEntity<byte[]> getPlacePhoto(@RequestParam String placeId,
                                               @RequestParam(defaultValue = "400") int maxWidth) {
-    System.out.println("✅ 백엔드에서 받은 placeId: " + placeId);
-
-    if (placeId == null || placeId.isEmpty()) {
-      return ResponseEntity.badRequest().body("❌ placeId 값이 유효하지 않습니다.".getBytes());
-    }
-
-    // 🔹 1️⃣ Place Details API 호출 → photo_reference 가져오기
     String detailsUrl = String.format(
         "https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=photos&key=%s",
         URLEncoder.encode(placeId, StandardCharsets.UTF_8), apiKey);
 
     ResponseEntity<Map> detailsResponse = restTemplate.getForEntity(detailsUrl, Map.class);
-
-    // 🔹 2️⃣ 응답 검증 (result 키 확인)
     Map<String, Object> responseBody = detailsResponse.getBody();
+
     if (responseBody == null || !responseBody.containsKey("result")) {
+      System.err.println("❌ 유효하지 않은 placeId: " + placeId);
       return ResponseEntity.badRequest().body("❌ 유효하지 않은 placeId입니다.".getBytes());
     }
 
-    // 🔹 3️⃣ result 내 photos 배열 존재 여부 확인
+    // ✅ 사진 정보가 없을 경우 예외 처리
     Map<String, Object> result = (Map<String, Object>) responseBody.get("result");
     if (!result.containsKey("photos")) {
+      System.err.println("❌ 사진이 없는 장소입니다: " + placeId);
       return ResponseEntity.badRequest().body("❌ 해당 장소에는 사진이 없습니다.".getBytes());
     }
 
-    // 🔹 4️⃣ 첫 번째 사진의 photo_reference 가져오기
     List<Map<String, Object>> photos = (List<Map<String, Object>>) result.get("photos");
+    if (photos.isEmpty()) {
+      System.err.println("❌ 사진이 없는 장소입니다: " + placeId);
+      return ResponseEntity.badRequest().body("❌ 해당 장소에는 사진이 없습니다.".getBytes());
+    }
+
     String photoReference = (String) photos.get(0).get("photo_reference");
 
-    System.out.println("✅ 가져온 photo_reference: " + photoReference);
-
-    // 🔹 5️⃣ 최종 사진 URL 생성
     String photoUrl = String.format(
         "https://maps.googleapis.com/maps/api/place/photo?maxwidth=%d&photo_reference=%s&key=%s",
         maxWidth, URLEncoder.encode(photoReference, StandardCharsets.UTF_8), apiKey);
 
     System.out.println("✅ 요청 URL: " + photoUrl);
 
-    // 🔹 6️⃣ 사진 요청 후 Redirect 처리
-    ResponseEntity<Void> initialResponse = restTemplate.exchange(photoUrl, HttpMethod.GET, null, Void.class);
-    if (initialResponse.getStatusCode().is3xxRedirection()) {
-      String redirectedUrl = initialResponse.getHeaders().getLocation().toString();
-      System.out.println("✅ 리디렉션된 이미지 URL: " + redirectedUrl);
-
-      ResponseEntity<byte[]> imageResponse = restTemplate.exchange(redirectedUrl, HttpMethod.GET, null, byte[].class);
-      return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(imageResponse.getBody());
-    }
-
-    return ResponseEntity.badRequest().build();
+    ResponseEntity<byte[]> imageResponse = restTemplate.exchange(photoUrl, HttpMethod.GET, null, byte[].class);
+    return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(imageResponse.getBody());
   }
 
 
@@ -163,12 +143,6 @@ public class GooglePlacesController {
             .queryParam("language", "ko")
             .build())
         .retrieve()
-        .onStatus(status -> status.isError(), clientResponse ->
-            clientResponse.bodyToMono(String.class).flatMap(errorBody -> {
-              System.err.println("❌ API 오류 발생: " + errorBody);
-              return Mono.error(new RuntimeException("Google API 오류: " + errorBody));
-            })
-        )
         .bodyToMono(String.class);
   }
 
@@ -189,22 +163,103 @@ public class GooglePlacesController {
   }
 
   /**
-   * 🔹 7. 추천된 여행 코스 (Google Directions API) - AI 추천 기능 추가 고려
+   * 🔹 7. 추천된 여행 코스 (Google Directions API)
    */
   @GetMapping("/recommend_route")
-  public Mono<String> getRecommendedRoute(@RequestParam String origin,
-                                          @RequestParam String destination,
-                                          @RequestParam(required = false) String waypoints) {
-    return webClient.get()
-        .uri(uriBuilder -> uriBuilder
-            .path("/directions/json")
-            .queryParam("origin", origin)
-            .queryParam("destination", destination)
-            .queryParam("waypoints", waypoints)
-            .queryParam("key", apiKey)
-            .queryParam("language", "ko")
-            .build())
-        .retrieve()
-        .bodyToMono(String.class);
+  public ResponseEntity<Mono<String>> getRecommendedRoute(@RequestParam String origin,
+                                                          @RequestParam String destination,
+                                                          @RequestParam(required = false) String waypoints) {
+    try {
+      // ✅ 주소 → 좌표 변환 (좌표 변환 실패 시 null 체크)
+      final String processedOrigin = getCoordinates(origin);
+      final String processedDestination = getCoordinates(destination);
+      final String processedWaypoints = (waypoints != null) ? getCoordinates(waypoints) : null;
+
+      if (processedOrigin == null || processedDestination == null) {
+        return ResponseEntity.badRequest().body(Mono.just("❌ 출발지 또는 목적지 좌표 변환 실패"));
+      }
+      if (processedWaypoints == null && waypoints != null) {
+        return ResponseEntity.badRequest().body(Mono.just("❌ 경유지 좌표 변환 실패"));
+      }
+
+      return ResponseEntity.ok(
+          webClient.get()
+              .uri(uriBuilder -> {
+                var uri = uriBuilder.path("/directions/json")
+                    .queryParam("origin", processedOrigin)
+                    .queryParam("destination", processedDestination)
+                    .queryParam("mode", "driving") // ✅ 자동차 모드 우선
+                    .queryParam("key", apiKey)
+                    .queryParam("language", "ko");
+
+                if (processedWaypoints != null) {
+                  uri.queryParam("waypoints", processedWaypoints.replace("|", "%7C"));
+                }
+
+                return uri.build();
+              })
+              .retrieve()
+              .bodyToMono(String.class)
+              .flatMap(response -> {
+                if (response.contains("\"status\" : \"ZERO_RESULTS\"")) {
+                  System.err.println("🚨 자동차 경로를 찾을 수 없음. 대중교통 모드로 재시도...");
+                  return webClient.get()
+                      .uri(uriBuilder -> uriBuilder.path("/directions/json")
+                          .queryParam("origin", processedOrigin)
+                          .queryParam("destination", processedDestination)
+                          .queryParam("mode", "transit") // ✅ 대중교통 모드 재시도
+                          .queryParam("key", apiKey)
+                          .queryParam("language", "ko")
+                          .build())
+                      .retrieve()
+                      .bodyToMono(String.class);
+                }
+                return Mono.just(response);
+              })
+      );
+
+    } catch (Exception e) {
+      System.err.println("❌ 경로 요청 실패: " + e.getMessage());
+      return ResponseEntity.status(500).body(Mono.just("🚨 내부 서버 오류 발생"));
+    }
+  }  // ✅ `getRecommendedRoute()` 닫는 `}` 추가
+
+  /**
+   * 🔹 주소를 좌표로 변환하는 메서드 (반드시 클래스 내에서 따로 선언해야 함!)
+   */
+  private String getCoordinates(String address) {
+    try {
+      System.out.println("🔍 좌표 변환 요청: " + address);
+
+      // ✅ Google Places API 활용
+      String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8);
+      String placesUrl = String.format("https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s&key=%s", encodedAddress, apiKey);
+
+      System.out.println("🔗 Google Places API 요청 URL: " + placesUrl);
+
+      ResponseEntity<Map> response = restTemplate.getForEntity(placesUrl, Map.class);
+      Map<String, Object> body = response.getBody();
+
+      if (body != null) {
+        System.out.println("📥 Google Places API 응답: " + body);
+
+        if (body.containsKey("results")) {
+          List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("results");
+          if (!results.isEmpty()) {
+            Map<String, Object> location = (Map<String, Object>) ((Map<String, Object>) results.get(0).get("geometry")).get("location");
+            String coordinates = location.get("lat") + "," + location.get("lng");
+            System.out.println("✅ 변환된 좌표: " + coordinates);
+            return coordinates;
+          }
+        }
+      }
+
+      System.err.println("❌ 주소 변환 실패: " + address);
+      return null;
+
+    } catch (Exception e) {
+      System.err.println("🚨 Google Places API 요청 실패: " + e.getMessage());
+      return null;
+    }
   }
 }

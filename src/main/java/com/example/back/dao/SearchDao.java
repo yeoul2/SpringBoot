@@ -15,45 +15,64 @@ public class SearchDao {
 	@Autowired
 	private SqlSessionTemplate sqlSessionTemplate;
 
-	// 🔹 1. 최근 검색어 저장
-	public int saveRecentSearch(Map<String, Object> sMap) {
-		log.info("🔍 saveRecentSearch 호출 | 파라미터: {}", sMap);
-		return sqlSessionTemplate.insert("saveRecentSearch", sMap);
+	// 🔹 1. 검색어 저장 (중복 제거 후 저장)
+	public void insertSearch(String userId, String searchTerm, String searchType) {
+		log.info("🔍 insertSearch 호출 | userId: {}, searchTerm: {}, searchType: {}", userId, searchTerm, searchType);
+		sqlSessionTemplate.delete("deleteDuplicateSearch",
+				Map.of("userId", userId, "searchTerm", searchTerm, "searchType", searchType));
+		sqlSessionTemplate.insert("insertSearch",
+				Map.of("userId", userId, "searchTerm", searchTerm, "searchType", searchType));
 	}
 
-	// 🔹 2. 최근 검색어 5개 유지 (오래된 검색어 삭제)
-	public int deleteOldRecentSearches(int userNo) {
-		log.info("🔍 deleteOldRecentSearches 호출 | userNo: {}", userNo);
-		return sqlSessionTemplate.delete("deleteOldRecentSearches", userNo);
+	// 🔹 2. 중복 검색어 삭제
+	public void deleteDuplicateSearch(String userId, String searchTerm, String searchType) {
+		log.info("🔍 deleteDuplicateSearch 호출 | userId: {}, searchTerm: {}", userId, searchTerm);
+		sqlSessionTemplate.delete("deleteDuplicateSearch",
+				Map.of("userId", userId, "searchTerm", searchTerm, "searchType", searchType));
 	}
 
-	// 🔹 3. 최근 검색어 조회 (최신 5개) ✅ 메서드명 변경
-	public List<Map<String, Object>> getRecentSearchList(int userNo) {
-		log.info("🔍 getRecentSearchList 호출 | userNo: {}", userNo);
-		return sqlSessionTemplate.selectList("getRecentSearchList", userNo);
+	// 🔹 3. 최근 검색어 조회 (최대 5개)
+	public List<Map<String, Object>> getRecentSearchList(String userId) {
+		log.info("🔍 getRecentSearchList 호출 | userId: {}", userId);
+		return sqlSessionTemplate.selectList("getRecentSearchList", userId);
 	}
 
-	// 🔹 4. 특정 최근 검색어 삭제
-	public int deleteRecentSearch(Map<String, Object> sMap) {
-		log.info("🔍 deleteRecentSearch 호출 | 파라미터: {}", sMap);
-		return sqlSessionTemplate.delete("deleteRecentSearch", sMap);
+	// 🔹 4. 최근 검색어 개수 조회
+	public int countRecentSearches(String userId) {
+		log.info("🔍 countRecentSearches 호출 | userId: {}", userId);
+		return sqlSessionTemplate.selectOne("countRecentSearches", userId);
 	}
 
-	// 🔹 5. 인기 검색어 조회 (TOP 10)
+	// 🔹 5. 가장 오래된 검색어 삭제 (최대 5개 유지)
+	public void deleteOldestSearch(String userId) {
+		log.info("🔍 deleteOldestSearch 호출 | userId: {}", userId);
+		sqlSessionTemplate.delete("deleteOldestSearch", userId);
+	}
+
+	// 🔹 6. 특정 검색어 삭제 (사용자가 직접 삭제)
+	public void deleteSearch(String userId, String searchTerm) {
+		log.info("🔍 deleteSearch 호출 | userId: {}, searchTerm: {}", userId, searchTerm);
+		sqlSessionTemplate.delete("deleteSearch",
+				Map.of("userId", userId, "searchTerm", searchTerm));
+	}
+
+	// 🔹 7. 인기 검색어 업데이트 (검색할 때마다 호출)
+	public void updatePopularSearch(String userId, String searchTerm, String searchType) {
+		log.info("🔍 updatePopularSearch 호출 | userId: {}, searchTerm: {}, searchType: {}", userId, searchTerm, searchType);
+		sqlSessionTemplate.insert("updatePopularSearch",
+				Map.of("userId", userId, "searchTerm", searchTerm, "searchType", searchType));
+	}
+
+	// 🔹 8. 인기 검색어 삽입 (처음 검색할 때)
+	public void insertPopularSearch(String searchTerm, String searchType) {
+		log.info("🔍 insertPopularSearch 호출 | searchTerm: {}, searchType: {}", searchTerm, searchType);
+		sqlSessionTemplate.insert("insertPopularSearch",
+				Map.of("searchTerm", searchTerm, "searchType", searchType));
+	}
+
+	// 🔹 9. 인기 검색어 조회 (TOP 10)
 	public List<Map<String, Object>> getPopularSearchList() {
 		log.info("🔍 getPopularSearchList 호출");
 		return sqlSessionTemplate.selectList("getPopularSearchList");
-	}
-
-	// 🔹 6. 인기 검색어 검색 횟수 증가 ✅ 추가
-	public int updatePopularSearchCount(Map<String, Object> searchTerm) {
-		log.info("🔍 updatePopularSearchCount 호출 | 파라미터: {}", searchTerm);
-		return sqlSessionTemplate.update("updatePopularSearchCount", searchTerm);
-	}
-
-	// 🔹 7. 인기 검색어 저장 (신규 등록) ✅ `updatePopularSearch` → `insertPopularSearch`로 변경
-	public int insertPopularSearch(Map<String, Object> searchTerm) {
-		log.info("🔍 insertPopularSearch 호출 | 파라미터: {}", searchTerm);
-		return sqlSessionTemplate.insert("insertPopularSearch", searchTerm);
 	}
 }
