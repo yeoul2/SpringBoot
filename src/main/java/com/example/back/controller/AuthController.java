@@ -70,10 +70,13 @@ public class AuthController {
     public ResponseEntity<?> signin(@RequestBody SigninRequest signinRequest) {
         log.info("✅ 받은값 : " + signinRequest.getUser_id() + ", " + signinRequest.getUser_pw());
         try {
+
             User user = userDao.findByUsername(signinRequest.getUser_id());
+
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("❌ 사용자 정보가 올바르지 않습니다.");
             }
+
             // ✅ 임시 비밀번호이면 로그인 차단
             if (user.isTempPw()) {
                 log.warn("❌ 임시 비밀번호로 로그인 시도: {}", signinRequest.getUser_id());
@@ -81,6 +84,7 @@ public class AuthController {
                         .body(Map.of("success", false, "message", "⚠️ 임시 비밀번호로는 로그인할 수 없습니다. 비밀번호를 변경해주세요.",
                                 "is_temp_pw", true));
             }
+
             JwtAuthenticationResponse response = authenticationService.signin(signinRequest);
             log.info("✅ JWT발급 성공 : " + response);
             return ResponseEntity.ok(response);
@@ -109,6 +113,15 @@ public class AuthController {
         log.info("✅ 회원가입 요청: {}", signupRequest);
 
         try {
+            // boolean hasUserRole =
+            // userDao.hasUserRoleByEmail(signupRequest.getUser_email());
+            /*
+             * if (hasUserRole) {
+             * return ResponseEntity.status(HttpStatus.CONFLICT)
+             * .body(Map.of("message", "이미 가입된 이메일입니다."));
+             * }
+             */
+
             // ✅ 1️⃣ 같은 이메일로 등록된 계정이 있는지 확인
             User user = userDao.findByEmail(signupRequest.getUser_email());
 
