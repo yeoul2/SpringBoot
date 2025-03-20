@@ -21,7 +21,17 @@ public class CourseService {
     // ✅ 전체 코스 조회 (상세 정보 포함)
     public List<Map<String, Object>> getCourseList(Map<String, Object> paramMap) {
         log.info("getCourseList 호출 성공");
-        return courseDao.getCourseList(paramMap);
+        // 페이지 정보 계산
+      int page = Integer.parseInt(paramMap.getOrDefault("page", "1").toString());
+      int offset = (page-1) * 8;
+      paramMap.put("offset", offset);  // 쿼리에 사용할 offset 추가
+      List<Map<String, Object>> list = null;
+      list = courseDao.getCourseList(paramMap);
+      return list;
+    }
+
+    public int getTotalCourseCount(Map<String, Object> paramMap) {
+        return courseDao.getCourseCount(paramMap);
     }
 
     // ✅ 특정 코스 조회 (상세 정보 포함)

@@ -3,6 +3,8 @@ package com.example.back.dao;
 import com.example.back.model.Course;
 import com.example.back.model.CourseDetail;
 import lombok.extern.log4j.Log4j2;
+
+import org.apache.ibatis.annotations.Mapper;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -12,6 +14,7 @@ import java.util.Map;
 
 @Log4j2
 @Repository
+@Mapper
 public class CourseDao {
       @Autowired
       private SqlSessionTemplate sqlSessionTemplate;
@@ -23,6 +26,11 @@ public class CourseDao {
                         .selectList("com.example.back.dao.CourseDao.getCourseList", paramMap);
             log.info("코스 개수: " + list.size());
             return list;
+      }
+
+      public int getCourseCount(Map<String, Object> paramMap) {
+            log.info("📌 getCourseCount 호출 성공");
+            return sqlSessionTemplate.selectOne("com.example.back.dao.CourseDao.getCourseCount", paramMap);
       }
 
       // ✅ 특정 코스 상세 조회

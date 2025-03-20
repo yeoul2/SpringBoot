@@ -48,7 +48,7 @@ public class SecurityConfig {
 	/* AuthenticationService를 Bean으로 등록하여 의존성 주입을 가능하게 함 */
 	@Bean
 	public AuthenticationService authenticationService(AuthenticationManager authenticationManager,
-	                                                   PasswordEncoder passwordEncoder) {
+			PasswordEncoder passwordEncoder) {
 		return new AuthenticationService(userDao, jwtService, authenticationManager, passwordEncoder);
 	}
 

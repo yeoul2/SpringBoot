@@ -20,11 +20,12 @@ public class JwtAuthenticationResponse {
     private String user_email;//DB에서 조회된 값
     private String user_birth;//DB에서 조회된 값
     private String user_id;//DB에서 조회된 값
+    private boolean isTempPw;
 
     // ✅ 직접 생성자 추가 (모든 필드를 받는 생성자)
     public JwtAuthenticationResponse( String accessToken, String refreshToken, String user_id, 
                                     String user_email, String user_name, String user_birth, 
-                                    int user_no, Role role) {
+                                    int user_no, Role role, boolean isTempPw) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.user_id = user_id;
@@ -33,6 +34,7 @@ public class JwtAuthenticationResponse {
         this.user_birth = user_birth;
         this.user_no = user_no;
         this.role = role;
+        this.isTempPw = isTempPw;
     }
 
 }

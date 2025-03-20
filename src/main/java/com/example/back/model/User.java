@@ -22,6 +22,7 @@ public class User implements UserDetails {
     private String user_pw;
     private String user_birth;
     private Role role; // USER, ADMIN, SNS
+    private boolean is_temp_pw;
     //사용자가 가진 권한 정보를 반환하는 메소드 선언
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -62,6 +63,11 @@ public class User implements UserDetails {
 	public int getUserNo() {
 		return user_no;
 	}
+
+    // ✅ Getter 추가
+    public boolean isTempPw() {
+        return Boolean.TRUE.equals(is_temp_pw);
+    }
     
 }
 

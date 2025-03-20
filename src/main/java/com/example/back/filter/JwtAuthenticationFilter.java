@@ -101,22 +101,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		// 다음 필터 체인을 계속 실행시킴
 		filterChain.doFilter(request, response);
 	}
-
 }// end of JwtAuthenticationFilter
-/*
- * 1. Authorization 헤더 처리
- *
- * 2. JWT토큰 검증
- *
- * 3. JWT 추출 및 사용자 식별
- *
- * 4. 사용자 인증처리
- *
- * 5. 예외처리 : 토큰 만료
- *
- *
- * 6. 필터 체인 계속 실행
- *
- *
- *
- */
