@@ -20,7 +20,7 @@ public class SearchController {
 
 	// 🔹 1. 최근 검색어 저장 (로그인한 사용자만 가능)
 	@PostMapping("/recent_save")
-  public ResponseEntity<String> saveRecentSearch(@RequestParam String searchTerm,
+  public ResponseEntity<?> saveRecentSearch(@RequestParam String searchTerm,
                                                  @RequestParam String searchType,
                                                  @AuthenticationPrincipal CustomUserDetails userDetails) {
     if (userDetails == null) {
