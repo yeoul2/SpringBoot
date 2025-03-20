@@ -102,8 +102,7 @@ spring:
 
 google:
   places:
-    api:
-      key: AIzaSyDzcuFvvgFd-iNVJ48s4dToutKtTJpQKDw  # ✅ Google Places API 키 추가
+    api-key: AIzaSyDzcuFvvgFd-iNVJ48s4dToutKtTJpQKDw  # ✅ Google Places API 키 추가
 
 logging:
   pattern:
