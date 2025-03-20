@@ -28,6 +28,11 @@ public class JWTService {
     @Value("${spring.security.jwt.expiration}") // ✅ 만료 시간 가져오기
     private long expiration;
 
+    /*
+     * @Value("${spring.security.jwt.refresh-expiration}") // ✅ 리프레시 토큰 만료 시간 추가
+     * private long refreshExpiration;
+     */
+
     @PostConstruct
     public void logSecretKey() {
         log.info("✅ Loaded JWT Secret Key: " + secretKey);
@@ -98,4 +103,16 @@ public class JWTService {
         final String username = extractUserName(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token)); // 🔥 이제 오류 안 남!
     }
+
+    // 리프레시 토큰 만료 여부 확인
+    /*
+     * public boolean isRefreshTokenExpired(String refreshToken) {
+     * try {
+     * return extractClaim(refreshToken, Claims::getExpiration).before(new Date());
+     * } catch (Exception e) {
+     * log.error("❌ 리프레시 토큰 검증 실패: {}", e.getMessage());
+     * return true; // 예외 발생 시 만료된 것으로 처리
+     * }
+     * }
+     */
 }
