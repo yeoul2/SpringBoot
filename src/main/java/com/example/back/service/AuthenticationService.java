@@ -61,7 +61,7 @@ public class AuthenticationService {
         String refreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
         log.info("✅ 로그인 성공: ID = {}, JWT 발급 완료", signinRequest.getUser_id());
         return new JwtAuthenticationResponse(jwt, refreshToken, user.getUser_id(), user.getUser_email(),
-                user.getUser_name(), user.getUser_birth(), user.getUser_no(), user.getRole());
+                user.getUser_name(), user.getUser_birth(), user.getUser_no(), user.getRole(), user.isTempPw());
     }
 
     public JwtAuthenticationResponse createJwtForOAuthUser(String user_email) {
@@ -75,7 +75,7 @@ public class AuthenticationService {
         String refreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
         log.info("✅ OAuth 로그인 성공: Email = {}, JWT 발급 완료", user_email);
         return new JwtAuthenticationResponse(jwt, refreshToken, user.getUser_id(), user.getUser_email(),
-                user.getUser_name(), user.getUser_birth(), user.getUser_no(), user.getRole());
+                user.getUser_name(), user.getUser_birth(), user.getUser_no(), user.getRole(), user.isTempPw());
     }
 
     public JwtAuthenticationResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
@@ -91,7 +91,7 @@ public class AuthenticationService {
             String refreshToken = jwtService.generateRefreshToken(new HashMap<>(), user);
             log.info("✅ 토큰 갱신 완료: ID = {}", userID);
             return new JwtAuthenticationResponse(jwt, refreshToken, user.getUser_id(), user.getUser_email(),
-                    user.getUser_name(), user.getUser_birth(), user.getUser_no(), user.getRole());
+                    user.getUser_name(), user.getUser_birth(), user.getUser_no(), user.getRole(), user.isTempPw());
         }
         log.warn("❌ 토큰 갱신 실패: 유효하지 않은 Refresh Token");
         return null;

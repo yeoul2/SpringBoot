@@ -21,7 +21,6 @@ public class CorsConfig {
         config.addAllowedHeader("Content-Type");
         config.setAllowCredentials(true); // ✅ withCredentials 활성화
         config.addAllowedMethod("*");
-        config.addExposedHeader("Authorization"); // ✅ Authorization 헤더 보존 설정
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }

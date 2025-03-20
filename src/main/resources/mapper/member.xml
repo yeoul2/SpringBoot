@@ -6,16 +6,18 @@
 
     <!-- 사용자 아이디(user_id)로 찾기 -->
     <select id="findByUsername" parameterType="java.lang.String" resultType="com.example.back.model.User">
-        SELECT user_no, user_name, user_email, user_id, user_pw, user_birth, role
+        SELECT user_no, user_name, user_email, user_id, user_pw, user_birth, role, is_temp_pw
         FROM users
         WHERE user_id = #{user_id}
     </select>
 
     <!-- 사용자 이메일(user_email)로 찾기 --> 
     <select id="findByEmail" parameterType="java.lang.String" resultType="com.example.back.model.User">
-        SELECT user_no, user_name, user_email, user_id, user_pw, user_birth, role
-        FROM users
-        WHERE user_email = #{user_email}
+        SELECT * FROM users 
+        WHERE user_email = #{user_email} 
+        ORDER BY 
+        CASE WHEN role = 'SNS' THEN 1 ELSE 2 END, -- SNS 계정을 우선 조회
+        user_no DESC
         LIMIT 1
     </select>
 
@@ -35,7 +37,9 @@
 
     <!-- 비밀번호 업데이트 -->
     <update id="updatePassword">
-        UPDATE users SET user_pw = #{user_pw} WHERE user_no = #{user_no}
+        UPDATE users
+        SET user_pw = #{user_pw}, is_temp_pw = #{is_temp_pw}
+        WHERE user_no = #{user_no}
     </update>
 
     <!-- 아이디 중복 확인 (COUNT 사용) ✅ -->
@@ -87,4 +91,18 @@
     <select id="findRolesByEmail" parameterType="java.lang.String" resultType="string">
         SELECT role FROM users WHERE user_email = #{user_email}
     </select>
+
+    <!-- 사용자 정보 업데이트 -->
+    <update id="updateUserInfo" parameterType="map">
+        UPDATE users
+        SET user_name = #{user_name},
+        user_email = #{user_email},
+        user_birth = #{user_birth}
+        WHERE user_no = #{user_no}
+    </update>
+
+    <!-- 회원 탈퇴 -->
+    <delete id="deleteUser" parameterType="int">
+    DELETE FROM users WHERE user_no = #{user_no}
+    </delete>
 </mapper>
