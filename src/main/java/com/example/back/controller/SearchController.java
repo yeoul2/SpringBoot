@@ -22,10 +22,10 @@ public class SearchController {
 
 	// 🔹 1. 검색어 저장 (최근 검색어 + 인기 검색어 반영)
 	@PostMapping("/save")
-	public ResponseEntity<String> saveSearch(@RequestParam String searchTerm,
-	                                         @RequestParam String searchType,
-	                                         @AuthenticationPrincipal CustomUserDetails userDetails) {
-		if (userDetails == null) {
+	public ResponseEntity<?> saveSearch(@RequestParam String searchTerm,
+	                                    @RequestParam String searchType,
+	                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
+		if (userDetails == null) { // 🔥 로그인하지 않은 경우 검색어 저장 금지
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
 		}
 		searchService.saveSearch(userDetails.getUserId(), searchTerm, searchType);
