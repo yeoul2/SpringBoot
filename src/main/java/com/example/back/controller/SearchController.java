@@ -3,6 +3,7 @@ package com.example.back.controller;
 import com.example.back.model.CustomUserDetails;
 import com.example.back.service.SearchService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,7 +46,6 @@ public class SearchController {
 		} else {
 			return ResponseEntity.badRequest().body(null);
 		}
-		return ResponseEntity.ok(searchService.getRecentSearchList(userDetails.getUserNo()));
 	}
 
 	// 🔹 3. 특정 검색어 삭제
