@@ -16,45 +16,58 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SearchController {
 
-	private final SearchService searchService;
+	@Autowired
+	private SearchService searchService;
 
-	// 🔹 1. 최근 검색어 저장 (로그인한 사용자만 가능)
-	@PostMapping("/recent_save")
-  public ResponseEntity<?> saveRecentSearch(@RequestParam String searchTerm,
-                                                 @RequestParam String searchType,
-                                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
-    if (userDetails == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
-    }
-    searchService.saveRecentSearch(userDetails.getUserNo(), searchTerm, searchType);
-    return ResponseEntity.ok("최근 검색어가 저장되었습니다.");
-  }
+	// 🔹 1. 검색어 저장 (최근 검색어 + 인기 검색어 반영)
+	@PostMapping("/save")
+	public ResponseEntity<?> saveSearch(@RequestParam String searchTerm,
+	                                    @RequestParam String searchType,
+	                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
+		if (userDetails == null) { // 🔥 로그인하지 않은 경우 검색어 저장 금지
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+		}
+		searchService.saveSearch(userDetails.getUserId(), searchTerm, searchType);
+		return ResponseEntity.ok("검색어가 저장되었습니다.");
+	}
 
-	// 🔹 2. 최근 검색어 조회 (최대 5개)
-	@GetMapping("/recent_list")
-	public ResponseEntity<List<Map<String, Object>>> getRecentSearchList(@AuthenticationPrincipal CustomUserDetails userDetails) {
-		if (userDetails == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+	// 🔹 2. 검색어 목록 조회 (최근 검색어 & 인기 검색어)
+	@GetMapping("/list")
+	public ResponseEntity<List<Map<String, Object>>> getSearchList(@RequestParam String category,
+	                                                               @AuthenticationPrincipal CustomUserDetails userDetails) {
+		if ("recent".equals(category)) {
+			if (userDetails == null) {
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+			}
+			return ResponseEntity.ok(searchService.getRecentSearchList(userDetails.getUserId()));
+		} else if ("popular".equals(category)) {
+			return ResponseEntity.ok(searchService.getPopularSearchList());
+		} else {
+			return ResponseEntity.badRequest().body(null);
 		}
 		return ResponseEntity.ok(searchService.getRecentSearchList(userDetails.getUserNo()));
 	}
 
-	// 🔹 3. 최근 검색어 삭제
-	@DeleteMapping("/recent_delete")
-	public ResponseEntity<String> deleteRecentSearch(@RequestParam String searchTerm,
-	                                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
+	// 🔹 3. 특정 검색어 삭제
+	@DeleteMapping("/delete")
+	public ResponseEntity<String> deleteSearch(@RequestParam String searchTerm,
+	                                           @AuthenticationPrincipal CustomUserDetails userDetails) {
 		if (userDetails == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
 		}
-		searchService.deleteRecentSearch(userDetails.getUserNo(), searchTerm);
-		return ResponseEntity.ok("최근 검색어가 삭제되었습니다.");
+		searchService.deleteSearch(userDetails.getUserId(), searchTerm);
+		return ResponseEntity.ok("검색어가 삭제되었습니다.");
 	}
 
-	// 🔹 4. 인기 검색어 업데이트 (검색할 때마다 호출, 모든 사용자 반영)
+	// 🔹 4. 인기 검색어 업데이트 (검색할 때마다 호출)
 	@PostMapping("/popular_update")
-	public ResponseEntity<String> updatePopularSearchCount(@RequestParam String searchTerm,
-	                                                       @RequestParam String searchType) {
-		searchService.updatePopularSearchCount(searchTerm, searchType);
+	public ResponseEntity<String> updatePopularSearch(@RequestParam String searchTerm,
+	                                                  @RequestParam String searchType,
+	                                                  @AuthenticationPrincipal CustomUserDetails userDetails) { // 🔥 userId 추가
+		if (userDetails == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+		}
+		searchService.updatePopularSearch(userDetails.getUserId(), searchTerm, searchType); // 🔥 userId 추가
 		return ResponseEntity.ok("인기 검색어가 업데이트되었습니다.");
 	}
 

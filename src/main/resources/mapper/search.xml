@@ -6,15 +6,15 @@
 
     <!-- 🔹 1. 최근 검색어 저장 -->
     <insert id="saveRecentSearch">
-        INSERT INTO recent_searches (user_no, search_term, search_type)
-        VALUES (#{userNo}, #{searchTerm}, #{searchType});
+        INSERT INTO recent_searches (user_id, search_term, search_type)
+        VALUES (#{userId}, #{searchTerm}, #{searchType});
     </insert>
 
     <!-- 🔹 2. 최근 검색어 조회 (최대 5개) -->
     <select id="getRecentSearchList" resultType="map">
         SELECT *
         FROM recent_searches
-        WHERE user_no = #{userNo}
+        WHERE user_id = #{userId}
         ORDER BY search_date DESC LIMIT 5;
     </select>
 
@@ -22,7 +22,7 @@
     <delete id="deleteRecentSearch">
         DELETE
         FROM recent_searches
-        WHERE user_no = #{userNo}
+        WHERE user_id = #{userId}
           AND search_term = #{searchTerm};
     </delete>
 
