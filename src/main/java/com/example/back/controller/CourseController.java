@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,18 +35,41 @@ public class CourseController {
             .create();
 
 
-   // ✅ 전체 코스 조회 (상세 정보 포함)
    @GetMapping("list")
-   public String getCourseList(@RequestParam Map<String, Object> paramMap) {
-      log.info("getCourseList 호출 성공");
+   public ResponseEntity<Map<String, Object>> getCourseList(@RequestParam Map<String, Object> paramMap) {
+      log.info("📌 getCourseList 호출 성공");
+
+      // ✅ 페이지네이션을 위한 설정
+      int page = Integer.parseInt(paramMap.getOrDefault("page", "1").toString()); 
+      int pageSize = Integer.parseInt(paramMap.getOrDefault("pageSize", "6").toString()); 
+      int offset = (page - 1) * pageSize;
+      paramMap.put("offset", offset);
+      paramMap.put("pageSize", pageSize);
+
+      log.info("✅ 현재 페이지: " + page);
+      log.info("✅ 페이지 크기: " + pageSize); // <-- 여기 추가
+      log.info("✅ 정렬 기준: " + paramMap.get("order"));
+
+
+      // ✅ 전체 개수 조회
+      int totalCourses = courseService.getTotalCourseCount(paramMap);
+      int totalPages = (int) Math.ceil((double) totalCourses / pageSize);
+
+      // ✅ 코스 목록 가져오기
       List<Map<String, Object>> list = courseService.getCourseList(paramMap);
-      
-      // 🟥 기존 코드: Gson 객체를 메서드 내부에서 생성
-      // Gson g = new Gson();
-      // return g.toJson(list);
-      
-      return gson.toJson(list); // 🟩 gson 사용하도록 변경
-}
+      log.info("✅ 가져온 데이터 개수: " + list.size());
+
+      // ✅ 응답 데이터 구성
+      Map<String, Object> response = new HashMap<>();
+      response.put("courses", list);
+      response.put("totalPages", totalPages);
+      response.put("currentPage", page);
+
+      return ResponseEntity.ok(response);
+   }
+
+
+
 
     // ✅ 특정 코스 조회 (상세 정보 포함)
    @GetMapping("detail")
