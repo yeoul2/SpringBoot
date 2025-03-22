@@ -95,11 +95,11 @@ public class GooglePlacesController {
 	 * 🔹 3. 장소 상세 정보 조회 (Place Details)
 	 */
 	@GetMapping("/place_details")
-	public Mono<String> getPlaceDetails(@RequestParam String placeId) {
+	public Mono<String> getPlaceDetails(@RequestParam("place_id") String place_id) {
 		return webClient.get()
 				.uri(uriBuilder -> uriBuilder
 						.path("/place/details/json")
-						.queryParam("place_id", placeId)
+						.queryParam("place_id", place_id)
 						.queryParam("key", apiKey)
 						.queryParam("language", "ko")
 						.build())
@@ -111,11 +111,11 @@ public class GooglePlacesController {
 	 * 🔹 4. 장소 사진 조회 (Place Photos) - photo_reference 캐싱 최적화
 	 */
 	@GetMapping("/place_photo")
-	public Mono<ResponseEntity<byte[]>> getPlacePhoto(@RequestParam String placeId,
+	public Mono<ResponseEntity<byte[]>> getPlacePhoto(@RequestParam String place_id,
 	                                                  @RequestParam(defaultValue = "400") int maxWidth) {
 		String detailsUrl = String.format(
 				"https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=photos&key=%s",
-				URLEncoder.encode(placeId, StandardCharsets.UTF_8), apiKey);
+				URLEncoder.encode(place_id, StandardCharsets.UTF_8), apiKey);
 
 		return webClient.get()
 				.uri(detailsUrl)
@@ -124,19 +124,19 @@ public class GooglePlacesController {
 				})
 				.flatMap(responseBody -> {
 					if (responseBody == null || !responseBody.containsKey("result")) {
-						System.err.println("❌ 유효하지 않은 placeId: " + placeId);
-						return Mono.just(ResponseEntity.badRequest().body("❌ 유효하지 않은 placeId입니다.".getBytes()));
+						System.err.println("❌ 유효하지 않은 place_id: " + place_id);
+						return Mono.just(ResponseEntity.badRequest().body("❌ 유효하지 않은 place_id입니다.".getBytes()));
 					}
 
 					Map<String, Object> result = (Map<String, Object>) responseBody.get("result");
 					if (!result.containsKey("photos")) {
-						System.err.println("❌ 사진이 없는 장소입니다: " + placeId);
+						System.err.println("❌ 사진이 없는 장소입니다: " + place_id);
 						return Mono.just(ResponseEntity.badRequest().body("❌ 해당 장소에는 사진이 없습니다.".getBytes()));
 					}
 
 					List<Map<String, Object>> photos = (List<Map<String, Object>>) result.get("photos");
 					if (photos.isEmpty()) {
-						System.err.println("❌ 사진이 없는 장소입니다: " + placeId);
+						System.err.println("❌ 사진이 없는 장소입니다: " + place_id);
 						return Mono.just(ResponseEntity.badRequest().body("❌ 해당 장소에는 사진이 없습니다.".getBytes()));
 					}
 

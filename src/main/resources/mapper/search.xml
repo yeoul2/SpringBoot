@@ -1,51 +1,53 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.example.back.dao.SearchDao">
 
-    <!-- 🔹 1. 최근 검색어 저장 -->
-    <insert id="saveRecentSearch">
-        INSERT INTO recent_searches (user_id, search_term, search_type)
-        VALUES (#{userId}, #{searchTerm}, #{searchType});
-    </insert>
-
-    <!-- 🔹 2. 최근 검색어 조회 (최대 5개) -->
-    <select id="getRecentSearchList" resultType="map">
-        SELECT *
+    <!-- 🔹 최근 검색어 개수 조회 -->
+    <select id="countSearch" resultType="int" parameterType="string">
+        SELECT COUNT(*)
         FROM recent_searches
         WHERE user_id = #{userId}
-        ORDER BY search_date DESC LIMIT 5;
     </select>
 
-    <!-- 🔹 3. 특정 최근 검색어 삭제 -->
-    <delete id="deleteRecentSearch">
-        DELETE
+    <!-- 🔹 최근 검색어 저장 또는 시간 갱신 (중복이면 갱신됨) -->
+    <insert id="saveSearch" parameterType="SearchRequest">
+        INSERT INTO recent_searches (user_id, search_term, search_type, search_date)
+        VALUES (#{userId}, #{searchTerm}, #{searchType}, NOW())
+            ON DUPLICATE KEY UPDATE search_date = NOW()
+    </insert>
+
+    <!-- 🔹 최근 검색어 목록 조회 (최대 5개, 최신순) -->
+    <select id="searchList" resultType="SearchHistory" parameterType="string">
+        SELECT id, user_id, search_term, search_type, search_date
         FROM recent_searches
         WHERE user_id = #{userId}
-          AND search_term = #{searchTerm};
+        ORDER BY search_date DESC
+            LIMIT 5
+    </select>
+
+    <!-- 🔹 최근 검색어 삭제 (사용자 요청 시) -->
+    <delete id="deleteSearch" parameterType="SearchRequest">
+        DELETE FROM recent_searches
+        WHERE user_id = #{userId}
+          AND search_term = #{searchTerm}
+          AND search_type = #{searchType}
     </delete>
 
-    <!-- 🔹 4. 인기 검색어 조회 (TOP 10) -->
-    <select id="getPopularSearchList" resultType="map">
-        SELECT *
-        FROM popular_searches
-        ORDER BY search_count DESC LIMIT 10;
-    </select>
-
-    <!-- 🔹 5. 인기 검색어 검색 횟수 증가 ✅ 추가 -->
-    <update id="updatePopularSearchCount">
-        UPDATE popular_searches
-        SET search_count = search_count + 1
-        WHERE search_term = #{searchTerm}
-          AND search_type = #{searchType};
-    </update>
-
-    <!-- 🔹 6. 인기 검색어 저장 (신규 등록) ✅ `updatePopularSearch` → `insertPopularSearch`로 변경 -->
-    <insert id="insertPopularSearch">
+    <!-- 🔹 인기 검색어 저장 또는 검색 횟수 증가 -->
+    <insert id="updatePopularSearch" parameterType="SearchRequest">
         INSERT INTO popular_searches (search_term, search_type, search_count)
-        VALUES (#{searchTerm}, #{searchType}, 1) ON DUPLICATE KEY
-        UPDATE search_count = search_count + 1;
+        VALUES (#{searchTerm}, #{searchType}, 1)
+            ON DUPLICATE KEY UPDATE search_count = search_count + 1
     </insert>
+
+    <!-- 🔹 인기 검색어 목록 조회 (TOP 10) -->
+    <select id="popularList" resultType="PopularSearch">
+        SELECT search_term, search_type, search_count
+        FROM popular_searches
+        ORDER BY search_count DESC
+            LIMIT 10
+    </select>
 
 </mapper>
