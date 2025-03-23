@@ -73,6 +73,8 @@ public class SecurityConfig {
 						.requestMatchers("/api/check").authenticated() // 🔥 인증된 사용자만 접근 가능
 						//.requestMatchers("/api/**").authenticated() // JWT 인증 필요
 						.requestMatchers("/api/user-info").authenticated() // 마이페이지 JWT 인증 필요
+						.requestMatchers("/api/search/save").authenticated() // 테스트중~~~~~~~~~~~~~~
+						.requestMatchers("/api/search/delete").authenticated() // 테스트중~~~~~~~~~~~~~~
 						.requestMatchers("/api/**").permitAll()
 						.requestMatchers("/api/email-verification").permitAll() // ✅ 이메일 인증 API 허용
 						.requestMatchers("/oauth2/authorization/**").permitAll() // ✅ OAuth2 로그인 엔드포인트 허용

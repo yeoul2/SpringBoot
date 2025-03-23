@@ -5,6 +5,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,15 +51,28 @@ public class SearchDao {
 	}
 
 	// 🔹 6. 특정 검색어 삭제 (사용자가 직접 삭제)
-	public void deleteSearch(String userId, String searchTerm) {
+	/* public void deleteSearch(String userId, String searchTerm) {
 		log.info("🔍 deleteSearch 호출 | userId: {}, searchTerm: {}", userId, searchTerm);
+		// sqlSessionTemplate.delete("deleteSearch",
 		sqlSessionTemplate.delete("deleteSearch",
 				Map.of("userId", userId, "searchTerm", searchTerm));
-	}
+	} */
+
+	/* 이희범 테스트 */
+	public int deleteRecentSearch(String userId, String searchTerm) { // ✅ 함수명 변경
+        Map<String, Object> params = new HashMap<>();
+        params.put("userId", userId);
+        params.put("searchTerm", searchTerm);
+
+        log.info("🗑️ 실행할 DELETE SQL: DELETE FROM recent_searches WHERE user_id = {} AND search_term = {}", userId, searchTerm);
+
+        return sqlSessionTemplate.delete("deleteRecentSearch", params); // ✅ 매핑된 ID 변경
+    }
 
 	// 🔹 7. 인기 검색어 업데이트 (검색할 때마다 호출)
 	public void updatePopularSearch(String userId, String searchTerm, String searchType) {
-		log.info("🔍 updatePopularSearch 호출 | userId: {}, searchTerm: {}, searchType: {}", userId, searchTerm, searchType);
+		log.info("🔍 updatePopularSearch 호출 | userId: {}, searchTerm: {}, searchType: {}", userId, searchTerm,
+				searchType);
 		sqlSessionTemplate.insert("updatePopularSearch",
 				Map.of("userId", userId, "searchTerm", searchTerm, "searchType", searchType));
 	}
@@ -75,4 +89,5 @@ public class SearchDao {
 		log.info("🔍 getPopularSearchList 호출");
 		return sqlSessionTemplate.selectList("getPopularSearchList");
 	}
+
 }

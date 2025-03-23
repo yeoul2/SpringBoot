@@ -43,10 +43,18 @@ public class SearchService {
 	}
 
 	// 🔹 3. 특정 검색어 삭제
-	@Transactional
+	/* @Transactional
 	public void deleteSearch(String userId, String searchTerm) {
 		log.info("🔍 deleteSearch 호출 | userId: {}, searchTerm: {}", userId, searchTerm);
 		searchDao.deleteSearch(userId, searchTerm);
+	} */
+
+
+	/* 이희범 테스트용 */
+	@Transactional
+	public int deleteSearch(String userId, String searchTerm) {
+		log.info("🔍 deleteSearch 호출 | userId: {}, searchTerm: {}", userId, searchTerm);
+		return searchDao.deleteRecentSearch(userId, searchTerm); // 🔥 반환값 추가
 	}
 
 	// 🔹 4. 인기 검색어 업데이트 (검색할 때마다 호출)
@@ -68,4 +76,5 @@ public class SearchService {
 		log.info("🔍 getPopularSearchList 호출");
 		return searchDao.getPopularSearchList();
 	}
+
 }
