@@ -4,11 +4,32 @@
 
 <mapper namespace="com.example.back.dao.CourseDao">
 
+   <!-- ✅ 좋아요 개수 증가 -->
+   <update id="addLikeCourse
+   " parameterType="int">
+      UPDATE course 
+      SET cs_like_count = cs_like_count + 1 
+      WHERE cs_no = #{cs_no}
+   </update>
+
+   <!-- ✅ 좋아요 개수 감소 (최소 0 유지) -->
+   <update id="removeLike" parameterType="int">
+      UPDATE course 
+      SET cs_like_count = CASE 
+         WHEN cs_like_count > 0 THEN cs_like_count - 1 
+         ELSE 0 
+      END
+      WHERE cs_no = #{cs_no}
+   </update>
+
+
+
    <!-- ✅ 전체 코스 개수 조회 (중복 제거) -->
    <select id="getCourseCount" resultType="int">
       SELECT COUNT(*) FROM course
+      WHERE cs_up_date IS NOT NULL
       <if test="keyword != null and keyword != ''">
-         WHERE cs_name LIKE CONCAT('%', #{keyword}, '%')
+         AND cs_name LIKE CONCAT('%', #{keyword}, '%')
       </if>
    </select>
 
