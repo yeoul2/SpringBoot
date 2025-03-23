@@ -87,9 +87,9 @@ spring:
 
   datasource:
     hikari:
-      jdbc-url: jdbc:mysql://203.234.214.71:3306/trip_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
-      username: root
-      password: abcd1234
+      jdbc-url: jdbc:mysql://203.234.214.71:4004/trip_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+      username: yeoul2
+      password: Kosmo@0401
       driver-class-name: com.mysql.cj.jdbc.Driver
       connection-timeout: 20000
       validation-timeout: 3000

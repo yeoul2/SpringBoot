@@ -9,7 +9,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;// GsonBuilder 추가(날짜 변환 처리)
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Date;
@@ -30,13 +32,24 @@ public class CourseController {
       // Gson에 LocalDateTime 처리 추가
    private final Gson gson = new GsonBuilder()
            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter()) // LocalDateTime을 처리하는 TypeAdapter 등록
-           .registerTypeAdapter(LocalTime.class, new LocalTimeAdapter())
-           .setDateFormat("yyyy-MM-dd") // 🟩 날짜 변환 설정 추가 (Date 변환 이슈 해결)
+            .registerTypeAdapter(LocalTime.class, new LocalTimeAdapter())
             .create();
+
+   @PostMapping("/toggleLike")
+   public ResponseEntity<String> toggleLike(@RequestBody Map<String, Object> request) {
+      int cs_no = (Integer) request.get("cs_no");  // 코스 번호
+      String action = (String) request.get("action");  // "like" 또는 "unlike"
+      log.info("toggleLike 요청 - cs_no: {}, action: {}", cs_no, action);
+      boolean success = courseService.toggleLike(cs_no, action);
+      return success 
+            ? ResponseEntity.ok("성공") 
+            : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("실패");
+   }
+            
 
 
    @GetMapping("list")
-   public ResponseEntity<Map<String, Object>> getCourseList(@RequestParam Map<String, Object> paramMap) {
+   public String getCourseList(@RequestParam Map<String, Object> paramMap) {
       log.info("📌 getCourseList 호출 성공");
 
       // ✅ 페이지네이션을 위한 설정
@@ -52,20 +65,23 @@ public class CourseController {
 
 
       // ✅ 전체 개수 조회
-      int totalCourses = courseService.getTotalCourseCount(paramMap);
-      int totalPages = (int) Math.ceil((double) totalCourses / pageSize);
+      int totalCourses = courseService.getTotalCourseCount(paramMap);//총개수
+      int totalPages = (int) Math.ceil((double) totalCourses / pageSize);//총 페이지 계산
 
       // ✅ 코스 목록 가져오기
       List<Map<String, Object>> list = courseService.getCourseList(paramMap);
       log.info("✅ 가져온 데이터 개수: " + list.size());
 
+
       // ✅ 응답 데이터 구성
       Map<String, Object> response = new HashMap<>();
-      response.put("courses", list);
-      response.put("totalPages", totalPages);
+      response.put("courses", list);//코스 리스트
+      response.put("totalPages", totalPages);//프론트에 넘겨줄 값
       response.put("currentPage", page);
 
-      return ResponseEntity.ok(response);
+      String temp = gson.toJson(response);
+
+      return temp;
    }
 
 
