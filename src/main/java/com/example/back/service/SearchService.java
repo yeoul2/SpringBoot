@@ -13,59 +13,45 @@ import java.util.Map;
 @Service
 public class SearchService {
 
-	@Autowired
-	private SearchDao searchDao;
+  @Autowired
+  private SearchDao searchDao;
 
-	// 🔹 1. 검색어 저장 (최근 검색어 + 인기 검색어 반영)
-	@Transactional
-	public void saveSearch(String userId, String searchTerm, String searchType) {
-		log.info("🔍 saveSearch 호출 | userId: {}, searchTerm: {}, searchType: {}", userId, searchTerm, searchType);
+  /* 🔹 최근 검색어 개수 조회 (저장 조건 확인용) */
+  public int countSearch(String userId) {
+    log.info("countSearch 호출 성공");
+    return searchDao.countSearch(userId);
+  }
 
-		// 🔹 중복 검색어 삭제 후 저장
-		searchDao.deleteDuplicateSearch(userId, searchTerm, searchType);
-		searchDao.insertSearch(userId, searchTerm, searchType);
+  /* 🔹 최근 검색어 저장 (중복 시 시간 갱신) */
+  @Transactional
+  public int saveSearch(Map<String, Object> map) {
+    log.info("saveSearch 호출 성공");
+    return searchDao.saveSearch(map);
+  }
 
-		// 🔹 최근 검색어 5개 유지 (초과 시 가장 오래된 검색어 삭제)
-		if (searchDao.countRecentSearches(userId) >= 5) {
-			searchDao.deleteOldestSearch(userId);
-		}
+  /* 🔹 최근 검색어 목록 조회 (최신순, 최대 5개) */
+  public List<Map<String, Object>> searchList(String userId) {
+    log.info("searchList 호출 성공");
+    return searchDao.searchList(userId);
+  }
 
-		// 🔹 인기 검색어 업데이트 (기존 검색어는 count 증가)
-		searchDao.updatePopularSearch(userId, searchTerm, searchType);
+  /* 🔹 최근 검색어 삭제 (사용자 요청 시) */
+  @Transactional
+  public int deleteSearch(Map<String, Object> map) {
+    log.info("deleteSearch 호출 성공");
+    return searchDao.deleteSearch(map);
+  }
 
-		log.info("✅ saveSearch 완료");
-	}
+  /* 🔹 인기 검색어 저장 또는 카운트 증가 */
+  @Transactional
+  public int updatePopularSearch(Map<String, Object> map) {
+    log.info("updatePopularSearch 호출 성공");
+    return searchDao.updatePopularSearch(map);
+  }
 
-	// 🔹 2. 최근 검색어 조회 (최대 5개)
-	public List<Map<String, Object>> getRecentSearchList(String userId) {
-		log.info("🔍 getRecentSearchList 호출 | userId: {}", userId);
-		return searchDao.getRecentSearchList(userId);
-	}
-
-	// 🔹 3. 특정 검색어 삭제
-	@Transactional
-	public void deleteSearch(String userId, String searchTerm) {
-		log.info("🔍 deleteSearch 호출 | userId: {}, searchTerm: {}", userId, searchTerm);
-		searchDao.deleteSearch(userId, searchTerm);
-	}
-
-	// 🔹 4. 인기 검색어 업데이트 (검색할 때마다 호출)
-	@Transactional
-	public void updatePopularSearch(String userId, String searchTerm, String searchType) {
-		log.info("🔍 updatePopularSearch 호출 | userId: {}, searchTerm: {}, searchType: {}", userId, searchTerm, searchType);
-		searchDao.updatePopularSearch(userId, searchTerm, searchType);
-	}
-
-	// 🔹 5. 인기 검색어 삽입 (처음 검색할 때)
-	@Transactional
-	public void insertPopularSearch(String searchTerm, String searchType) {
-		log.info("🔍 insertPopularSearch 호출 | searchTerm: {}, searchType: {}", searchTerm, searchType);
-		searchDao.insertPopularSearch(searchTerm, searchType);
-	}
-
-	// 🔹 6. 인기 검색어 조회 (TOP 10)
-	public List<Map<String, Object>> getPopularSearchList() {
-		log.info("🔍 getPopularSearchList 호출");
-		return searchDao.getPopularSearchList();
-	}
+  /* 🔹 인기 검색어 Top 10 조회 */
+  public List<Map<String, Object>> popularList() {
+    log.info("popularList 호출 성공");
+    return searchDao.popularList();
+  }
 }

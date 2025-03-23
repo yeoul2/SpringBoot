@@ -15,64 +15,39 @@ public class SearchDao {
 	@Autowired
 	private SqlSessionTemplate sqlSessionTemplate;
 
-	// 🔹 1. 검색어 저장 (중복 제거 후 저장)
-	public void insertSearch(String userId, String searchTerm, String searchType) {
-		log.info("🔍 insertSearch 호출 | userId: {}, searchTerm: {}, searchType: {}", userId, searchTerm, searchType);
-		sqlSessionTemplate.delete("deleteDuplicateSearch",
-				Map.of("userId", userId, "searchTerm", searchTerm, "searchType", searchType));
-		sqlSessionTemplate.insert("insertSearch",
-				Map.of("userId", userId, "searchTerm", searchTerm, "searchType", searchType));
+	/* 🔹 최근 검색어 개수 조회 */
+	public int countSearch(String userId) {
+		log.info("countSearch 호출 성공");
+		return sqlSessionTemplate.selectOne("countSearch", userId);
 	}
 
-	// 🔹 2. 중복 검색어 삭제
-	public void deleteDuplicateSearch(String userId, String searchTerm, String searchType) {
-		log.info("🔍 deleteDuplicateSearch 호출 | userId: {}, searchTerm: {}", userId, searchTerm);
-		sqlSessionTemplate.delete("deleteDuplicateSearch",
-				Map.of("userId", userId, "searchTerm", searchTerm, "searchType", searchType));
+	/* 🔹 최근 검색어 저장 (중복 시 시간만 갱신됨) */
+	public int saveSearch(Map<String, Object> map) {
+		log.info("saveSearch 호출 성공");
+		return sqlSessionTemplate.insert("saveSearch", map);
 	}
 
-	// 🔹 3. 최근 검색어 조회 (최대 5개)
-	public List<Map<String, Object>> getRecentSearchList(String userId) {
-		log.info("🔍 getRecentSearchList 호출 | userId: {}", userId);
-		return sqlSessionTemplate.selectList("getRecentSearchList", userId);
+	/* 🔹 최근 검색어 목록 조회 (최신순, 최대 5개) */
+	public List<Map<String, Object>> searchList(String userId) {
+		log.info("searchList 호출 성공");
+		return sqlSessionTemplate.selectList("searchList", userId);
 	}
 
-	// 🔹 4. 최근 검색어 개수 조회
-	public int countRecentSearches(String userId) {
-		log.info("🔍 countRecentSearches 호출 | userId: {}", userId);
-		return sqlSessionTemplate.selectOne("countRecentSearches", userId);
+	/* 🔹 최근 검색어 삭제 (사용자 직접 요청) */
+	public int deleteSearch(Map<String, Object> map) {
+		log.info("deleteSearch 호출 성공");
+		return sqlSessionTemplate.delete("deleteSearch", map);
 	}
 
-	// 🔹 5. 가장 오래된 검색어 삭제 (최대 5개 유지)
-	public void deleteOldestSearch(String userId) {
-		log.info("🔍 deleteOldestSearch 호출 | userId: {}", userId);
-		sqlSessionTemplate.delete("deleteOldestSearch", userId);
+	/* 🔹 인기 검색어 저장 또는 검색 수 증가 */
+	public int updatePopularSearch(Map<String, Object> map) {
+		log.info("updatePopularSearch 호출 성공");
+		return sqlSessionTemplate.insert("updatePopularSearch", map);
 	}
 
-	// 🔹 6. 특정 검색어 삭제 (사용자가 직접 삭제)
-	public void deleteSearch(String userId, String searchTerm) {
-		log.info("🔍 deleteSearch 호출 | userId: {}, searchTerm: {}", userId, searchTerm);
-		sqlSessionTemplate.delete("deleteSearch",
-				Map.of("userId", userId, "searchTerm", searchTerm));
-	}
-
-	// 🔹 7. 인기 검색어 업데이트 (검색할 때마다 호출)
-	public void updatePopularSearch(String userId, String searchTerm, String searchType) {
-		log.info("🔍 updatePopularSearch 호출 | userId: {}, searchTerm: {}, searchType: {}", userId, searchTerm, searchType);
-		sqlSessionTemplate.insert("updatePopularSearch",
-				Map.of("userId", userId, "searchTerm", searchTerm, "searchType", searchType));
-	}
-
-	// 🔹 8. 인기 검색어 삽입 (처음 검색할 때)
-	public void insertPopularSearch(String searchTerm, String searchType) {
-		log.info("🔍 insertPopularSearch 호출 | searchTerm: {}, searchType: {}", searchTerm, searchType);
-		sqlSessionTemplate.insert("insertPopularSearch",
-				Map.of("searchTerm", searchTerm, "searchType", searchType));
-	}
-
-	// 🔹 9. 인기 검색어 조회 (TOP 10)
-	public List<Map<String, Object>> getPopularSearchList() {
-		log.info("🔍 getPopularSearchList 호출");
-		return sqlSessionTemplate.selectList("getPopularSearchList");
+	/* 🔹 인기 검색어 목록 조회 (TOP 10) */
+	public List<Map<String, Object>> popularList() {
+		log.info("popularList 호출 성공");
+		return sqlSessionTemplate.selectList("popularList");
 	}
 }
