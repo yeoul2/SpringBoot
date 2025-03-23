@@ -95,11 +95,11 @@ public class GooglePlacesController {
 	 * 🔹 3. 장소 상세 정보 조회 (Place Details)
 	 */
 	@GetMapping("/place_details")
-	public Mono<String> getPlaceDetails(@RequestParam String placeId) {
+	public Mono<String> getPlaceDetails(@RequestParam String place_id) {
 		return webClient.get()
 				.uri(uriBuilder -> uriBuilder
 						.path("/place/details/json")
-						.queryParam("place_id", placeId)
+						.queryParam("place_id", place_id)
 						.queryParam("key", apiKey)
 						.queryParam("language", "ko")
 						.build())
