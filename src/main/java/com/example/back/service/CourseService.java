@@ -6,6 +6,7 @@ import com.example.back.model.CourseDetail;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -18,16 +19,26 @@ public class CourseService {
     @Autowired
     private CourseDao courseDao;
 
+    @Transactional
+    public boolean toggleLike(int cs_no, String action) {
+        if ("like".equalsIgnoreCase(action)) {
+            log.info("좋아요 추가 실행 - cs_no: {}", cs_no);
+            return courseDao.addLike(cs_no) == 1;  // 좋아요 추가 (cs_like_count 증가)
+        } else if ("unlike".equalsIgnoreCase(action)) {
+            log.info("좋아요 취소 실행 - cs_no: {}", cs_no);
+            return courseDao.removeLike(cs_no) == 1;  // 좋아요 취소 (cs_like_count 감소)
+        }
+        return false;
+    }
+    
+
+    
     // ✅ 전체 코스 조회 (상세 정보 포함)
     public List<Map<String, Object>> getCourseList(Map<String, Object> paramMap) {
         log.info("getCourseList 호출 성공");
-        // 페이지 정보 계산
-      int page = Integer.parseInt(paramMap.getOrDefault("page", "1").toString());
-      int offset = (page-1) * 8;
-      paramMap.put("offset", offset);  // 쿼리에 사용할 offset 추가
-      List<Map<String, Object>> list = null;
-      list = courseDao.getCourseList(paramMap);
-      return list;
+        List<Map<String, Object>> list = null;
+        list = courseDao.getCourseList(paramMap);
+        return list;
     }
 
     public int getTotalCourseCount(Map<String, Object> paramMap) {
