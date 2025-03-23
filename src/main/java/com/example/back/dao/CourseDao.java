@@ -4,7 +4,12 @@ import com.example.back.model.Course;
 import com.example.back.model.CourseDetail;
 import lombok.extern.log4j.Log4j2;
 
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -19,6 +24,18 @@ public class CourseDao {
       @Autowired
       private SqlSessionTemplate sqlSessionTemplate;
 
+      // 좋아요 추가 (cs_like_count 증가)
+      public int addLike(int cs_no) {
+            return sqlSessionTemplate.update("com.example.back.dao.CourseDao.addLike", cs_no);
+      }
+      
+      // 좋아요 취소 (cs_like_count 감소, 0 이하 방지)
+      public int removeLike(int cs_no) {
+            return sqlSessionTemplate.update("com.example.back.dao.CourseDao.removeLike", cs_no);
+      }
+      
+      
+
       // ✅ 코스 목록 조회
       public List<Map<String, Object>> getCourseList(Map<String, Object> paramMap) {
             log.info("getCourseList 호출 성공");
@@ -30,7 +47,9 @@ public class CourseDao {
 
       public int getCourseCount(Map<String, Object> paramMap) {
             log.info("📌 getCourseCount 호출 성공");
-            return sqlSessionTemplate.selectOne("com.example.back.dao.CourseDao.getCourseCount", paramMap);
+            int result = sqlSessionTemplate.selectOne("com.example.back.dao.CourseDao.getCourseCount", paramMap);
+            log.info("코스 개수: " + result);
+            return result;
       }
 
       // ✅ 특정 코스 상세 조회
@@ -73,4 +92,18 @@ public class CourseDao {
             return result;
       }
 
+      // ✅ user_id로 코스찾기
+      public List<Map<String, Object>> getUsercourse(String user_id) {
+            log.info("getUsercourse 호출 성공:" + user_id);
+            List<Map<String, Object>> ulist = null;
+            ulist = sqlSessionTemplate.selectList("com.example.back.dao.CourseDao.getUsercourse", user_id);
+            return ulist;
+      }
+
+      public int shareCourse(int cs_no) {
+            log.info("shareCourse호출 성공"+cs_no);
+            int result = -1;
+            result = sqlSessionTemplate.update("shareCourse",cs_no);
+            return result;
+      }
 }

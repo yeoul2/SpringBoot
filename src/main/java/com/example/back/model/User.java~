@@ -58,7 +58,7 @@ public class User implements UserDetails {
 	public String getUsername() {
 		return user_id;
 	}
-
+  
     // ✅ Getter 추가
     public boolean isTempPw() {
         return Boolean.TRUE.equals(is_temp_pw);

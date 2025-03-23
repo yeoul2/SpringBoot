@@ -20,6 +20,7 @@ public class TripBoard {
    private String user_id              = "" ;   // 아이디
    private int    tb_participants      = 0 ;    // 여행인원
    private String tb_theme             = "" ;   // 테마
-   private String tb_up_date           =""   ;  // 게시글 올린 날짜
+   private String tb_up_date           = ""   ; // 게시글 올린 날짜
+   private int    cs_no                = 0 ;   // 코스정보
 
 }

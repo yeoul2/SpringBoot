@@ -48,7 +48,7 @@ public class SecurityConfig {
 	/* AuthenticationService를 Bean으로 등록하여 의존성 주입을 가능하게 함 */
 	@Bean
 	public AuthenticationService authenticationService(AuthenticationManager authenticationManager,
-			PasswordEncoder passwordEncoder) {
+	                                                   PasswordEncoder passwordEncoder) {
 		return new AuthenticationService(userDao, jwtService, authenticationManager, passwordEncoder);
 	}
 
@@ -67,13 +67,14 @@ public class SecurityConfig {
 				.csrf(csrf -> csrf.disable()) // csrf 보안 비활성화 (jwt 이므로 필요가 없음)
 				.authorizeHttpRequests(requests -> requests
 						.requestMatchers("/api/login").permitAll() // 로그인 경로 허용
-						.requestMatchers("/api/search/list").permitAll() // 🔥 검색 기능은 로그인 없이 사용 가능하도록 설정
-						.requestMatchers("/api/search/save", "/api/search/delete", "/api/search/popular_update").authenticated() // 🔥 검색어 저장, 삭제, 인기 검색어 업데이트는 로그인 필요
-						.requestMatchers("/api/places/**").permitAll() // Places API 경로 허용
-//						.requestMatchers("/api/**").permitAll() // Places API 경로 허용
-						.requestMatchers("/api/check").authenticated() // 🔥 인증된 사용자만 접근 가능
-//						.requestMatchers("/api/**").authenticated() // JWT 인증 필요
 						.requestMatchers("/oauth2/**").permitAll() // OAuth2 관련 경로 허용
+						.requestMatchers("/api/search/**").permitAll() // 검색 API 경로 허용
+						.requestMatchers("/api/places/**").permitAll() // Places API 경로 허용
+						.requestMatchers("/api/check").authenticated() // 🔥 인증된 사용자만 접근 가능
+						//.requestMatchers("/api/**").authenticated() // JWT 인증 필요
+						.requestMatchers("/api/user-info").authenticated() // 마이페이지 JWT 인증 필요
+						.requestMatchers("/api/**").permitAll()
+						.requestMatchers("/api/email-verification").permitAll() // ✅ 이메일 인증 API 허용
 						.requestMatchers("/oauth2/authorization/**").permitAll() // ✅ OAuth2 로그인 엔드포인트 허용
 						.requestMatchers("/oauth/naver/callback").permitAll() // 네이버 콜백 허용
 						.requestMatchers("/oauth/google/callback").permitAll() // 구글 콜백 허용
