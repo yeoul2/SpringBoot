@@ -100,8 +100,12 @@
    </delete>
 
    <!-- ✅ 코스 상세 조회 -->
-   <select id="courseDetails" resultType="map">
-      SELECT * FROM cs_detail WHERE cs_no = #{cs_no} ORDER BY cdt_no
+   <select id="courseDetails" resultType="com.example.back.model.CourseDetail">
+      SELECT
+         cdt_no,cs_no,cdt_place,cdt_place_type,cdt_time,cdt_time_car,cdt_time_public,cdt_day
+      FROM cs_detail
+      WHERE cs_no = #{cs_no}
+      ORDER BY cdt_no
    </select>
 
    <!-- ✅ 코스 상세 추가 -->
@@ -124,4 +128,17 @@
       </trim>
    </insert>
 
+   <!--user_id 기준으로 코스 조회-->
+   <select id="getUsercourse" parameterType="string">
+      SELECT *
+      FROM course
+      WHERE user_id = #{user_id}
+   </select>
+
+   <!--user가 코스 공유시 cs_up_date에 현재 날짜 삽입-->
+   <update id="shareCourse" parameterType="int">
+        UPDATE course
+        SET cs_up_date = NOW()
+        WHERE cs_no =#{cs_no}
+   </update>
 </mapper>

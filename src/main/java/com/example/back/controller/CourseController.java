@@ -126,5 +126,24 @@ public class CourseController {
          return String.valueOf(courseService.deleteCourse(cs_no));
    }
 
+   // 👩‍💻 user_id로 코스찾기
+   @GetMapping("getUserCourse")
+   public String getUsercourse(@RequestParam String user_id) {
+      log.info("getUsercourse 호출 성공:" + user_id);
+      List<Map<String,Object>> ulist = null;
+      ulist = courseService.getUsercourse(user_id);
+      String temp = gson.toJson(ulist);
+      return temp;
+   }
+
+   // 👨‍👩‍👧‍👦코스공유하기(저장된 코스 공유하기 클릭시 작동)
+   @PutMapping("shareCourse")
+   public int shareCourse(@RequestParam int cs_no) {
+      log.info("shareCourse 호출 성공"+ cs_no);
+      int result = -1;
+      result = courseService.shareCourse(cs_no);
+      return result;
+   }
+
 }
 

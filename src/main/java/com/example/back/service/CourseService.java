@@ -85,4 +85,19 @@ public class CourseService {
         log.info("deleteCourseWithDetails 완료: " + cs_no);
         return result;
     }
+
+    // ✅ user_id로 코스찾기
+    public List<Map<String, Object>> getUsercourse(String user_id) {
+        log.info("getUsercourse 호출 성공:" + user_id);
+        List<Map<String, Object>> ulist = null;
+        ulist = courseDao.getUsercourse(user_id);
+        return ulist;
+   }
+
+    public int shareCourse(int cs_no) {
+        log.info("shareCourse호출 성공" + cs_no);
+        int result = -1;
+        result = courseDao.shareCourse(cs_no);
+        return result;
+    }
 }
