@@ -8,6 +8,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -62,7 +64,8 @@ public class TripBoardController {
 
    // 후기 등록
    @PostMapping("tripboardInsert")
-   public int tripboardInsert(@RequestBody List<Map<String, Object>> requestData) {
+   public int tripboardInsert(@RequestBody List<Map<String, Object>> requestData, 
+                              @AuthenticationPrincipal UserDetails userDetails) {
       log.info("tripboardInsert 호출 성공");
       if (requestData.size() < 2) {
          throw new RuntimeException("올바른 데이터 형식이 아닙니다.");
@@ -84,7 +87,8 @@ public class TripBoardController {
 
    // 후기 수정
    @PutMapping("tripboardUpdate/{tb_no}")
-   public int tripboardUpdate(@PathVariable int tb_no, @RequestBody List<Map<String, Object>> requestData) {
+   public int tripboardUpdate(@PathVariable int tb_no, @RequestBody List<Map<String, Object>> requestData,
+                              @AuthenticationPrincipal UserDetails userDetails) {
       log.info("boardUpdate호출 성공");
       log.info("tb_no: " + tb_no);
       log.info("requestData: " + requestData);
@@ -103,7 +107,8 @@ public class TripBoardController {
 
    // 후기 삭제
    @DeleteMapping("tripboardDelete")
-   public String tripboardDelete(@RequestParam(value = "tb_no", required = true) int tb_no) {
+   public String tripboardDelete(@RequestParam(value = "tb_no", required = true) int tb_no,
+                                 @AuthenticationPrincipal UserDetails userDetails) {
       log.info("tripboardDelete 호출 성공");
       int result = 1;
       result = tripBoardService.tripboardDelete(tb_no);
@@ -114,7 +119,8 @@ public class TripBoardController {
 
    // 댓글 등록
    @PostMapping("commentInsert")
-   public int commentInsert(@RequestBody Map<String, Object> tmap) {
+   public int commentInsert(@RequestBody Map<String, Object> tmap,
+                           @AuthenticationPrincipal UserDetails userDetails) {
       log.info("commentInsert 호출 성공");
       int result = 1;
       result = tripBoardService.commentInsert(tmap);
@@ -123,7 +129,8 @@ public class TripBoardController {
 
    // 댓글 수정
    @PutMapping("commentUpdate")
-   public int commentUpdate(@RequestBody Map<String, Object> tmap) {
+   public int commentUpdate(@RequestBody Map<String, Object> tmap,
+                           @AuthenticationPrincipal UserDetails userDetails) {
       log.info("commentUpdate 호출 성공");
       int result = 1;
       result = tripBoardService.commentUpdate(tmap);
@@ -132,7 +139,8 @@ public class TripBoardController {
 
    // 댓글 삭제
    @DeleteMapping("commentDelete")
-   public int commentDelete(@RequestParam(value = "tbc_no", required = true) int tbc_no) {
+   public int commentDelete(@RequestParam(value = "tbc_no", required = true) int tbc_no,
+                           @AuthenticationPrincipal UserDetails userDetails) {
       log.info("commentDelete 호출 성공");
       int result = 1;
       result = tripBoardService.commentDelete(tbc_no);
@@ -143,7 +151,8 @@ public class TripBoardController {
    // user_id, tb_no
    // 좋아요는 T/ 안눌렀으면 F
    @PostMapping("hasLiked")
-   public boolean hasLiked(@RequestBody Map<String, Object> lmap) {
+   public boolean hasLiked(@RequestBody Map<String, Object> lmap,
+                           @AuthenticationPrincipal UserDetails userDetails) {
       log.info("hasLiked호출 성공");
       boolean result = false;
       result = tripBoardService.hasLiked(lmap);
@@ -153,7 +162,8 @@ public class TripBoardController {
    // 좋아요 토글
    // user_id, tb_no
    @PostMapping("toggleLike")
-   public String toggleLike(@RequestBody Map<String, Object> lmap) {
+   public String toggleLike(@RequestBody Map<String, Object> lmap,
+                           @AuthenticationPrincipal UserDetails userDetails) {
       log.info("toggleLike호출 성공");
       String result = "";
       result = tripBoardService.toggleLike(lmap);

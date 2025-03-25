@@ -113,28 +113,20 @@ public class AuthController {
         log.info("✅ 회원가입 요청: {}", signupRequest);
 
         try {
-            // boolean hasUserRole =
-            // userDao.hasUserRoleByEmail(signupRequest.getUser_email());
-            /*
-             * if (hasUserRole) {
-             * return ResponseEntity.status(HttpStatus.CONFLICT)
-             * .body(Map.of("message", "이미 가입된 이메일입니다."));
-             * }
-             */
 
             // ✅ 1️⃣ 같은 이메일로 등록된 계정이 있는지 확인
             User user = userDao.findByEmail(signupRequest.getUser_email());
 
             if (user != null) {
                 log.info("🔍 기존 계정 정보 확인 - email: {}, role: {}", user.getUser_email(), user.getRole());
-            
+
                 if (user.getRole() == Role.USER) {
                     return ResponseEntity.status(HttpStatus.CONFLICT)
                             .body(Map.of("message", "이미 가입된 이메일입니다."));
                 } else if (user.getRole() == Role.SNS) {
                     log.info("🗑️ 기존 SNS 계정 삭제 시도 (user_no: {})", user.getUser_no());
                     int deletedRows = userDao.deleteUser(user.getUser_no());
-            
+
                     if (deletedRows > 0) {
                         log.info("✅ 기존 SNS 계정 삭제 성공 (email: {})", signupRequest.getUser_email());
                     } else {
@@ -429,20 +421,10 @@ public class AuthController {
     // 사용자 정보 업데이트 API
     @PutMapping("/update-user")
     public ResponseEntity<?> updateUserInfo(
-            @RequestHeader("Authorization") String token,
-            @RequestBody Map<String, String> request) {
+            @RequestBody Map<String, String> request,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        if (token == null || !token.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "❌ 인증되지 않은 요청입니다. 로그인 후 다시 시도하세요."));
-        }
-
-        String user_id = jwtService.extractUserName(token.substring(7));
-
-        if (user_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "❌ 사용자 정보를 찾을 수 없습니다."));
-        }
+        String user_id = userDetails.getUsername(); // ✅ 이미 필터에서 인증된 사용자
 
         User user = userDao.findByUsername(user_id);
         if (user == null) {
@@ -463,20 +445,10 @@ public class AuthController {
     // 마이페이지 비밀번호 변경 API
     @PutMapping("/update-pw")
     public ResponseEntity<?> updatePw(
-            @RequestHeader("Authorization") String token,
-            @RequestBody Map<String, String> request) {
+            @RequestBody Map<String, String> request,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        if (token == null || !token.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "❌ 인증되지 않은 요청입니다. 로그인 후 다시 시도하세요."));
-        }
-
-        String user_id = jwtService.extractUserName(token.substring(7));
-
-        if (user_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "❌ 사용자 정보를 찾을 수 없습니다."));
-        }
+        String user_id = userDetails.getUsername();
 
         User user = userDao.findByUsername(user_id);
         if (user == null) {
@@ -514,21 +486,11 @@ public class AuthController {
 
     @DeleteMapping("/delete-info")
     public ResponseEntity<?> deleteInfo(
-            @RequestHeader("Authorization") String token,
-            @RequestBody Map<String, String> request) {
+            @RequestBody Map<String, String> request,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        if (token == null || !token.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "❌ 인증되지 않은 요청입니다. 로그인 후 다시 시도하세요."));
-        }
-
-        String user_id = jwtService.extractUserName(token.substring(7));
-
-        if (user_id == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "❌ 사용자 정보를 찾을 수 없습니다."));
-        }
-
+        String user_id = userDetails.getUsername(); // ✅ 이미 필터에서 인증된 사용자
+        
         User user = userDao.findByUsername(user_id);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
