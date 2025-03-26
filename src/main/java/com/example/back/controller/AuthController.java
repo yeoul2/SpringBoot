@@ -68,28 +68,24 @@ public class AuthController {
     // 로그인 API
     @PostMapping("/login") // 프론트랑 맞추기
     public ResponseEntity<?> signin(@RequestBody SigninRequest signinRequest) {
-        log.info("✅ 받은값 : " + signinRequest.getUser_id() + ", " + signinRequest.getUser_pw());
+        log.info("받은값 : " + signinRequest.getUser_id() + ", " + signinRequest.getUser_pw());
         try {
-
             User user = userDao.findByUsername(signinRequest.getUser_id());
-
             if (user == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("❌ 사용자 정보가 올바르지 않습니다.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("사용자 정보가 올바르지 않습니다.");
             }
-
-            // ✅ 임시 비밀번호이면 로그인 차단
+            // 임시 비밀번호이면 로그인 차단
             if (user.isTempPw()) {
-                log.warn("❌ 임시 비밀번호로 로그인 시도: {}", signinRequest.getUser_id());
+                log.warn(" 임시 비밀번호로 로그인 시도: {}", signinRequest.getUser_id());
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("success", false, "message", "⚠️ 임시 비밀번호로는 로그인할 수 없습니다. 비밀번호를 변경해주세요.",
                                 "is_temp_pw", true));
             }
-
             JwtAuthenticationResponse response = authenticationService.signin(signinRequest);
-            log.info("✅ JWT발급 성공 : " + response);
+            log.info(" JWT발급 성공 : " + response);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("❌ 로그인 실패: ", e);
+            log.error(" 로그인 실패: ", e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
         }
     }
