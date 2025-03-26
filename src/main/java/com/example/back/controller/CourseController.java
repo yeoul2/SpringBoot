@@ -11,6 +11,8 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,15 +37,21 @@ public class CourseController {
             .registerTypeAdapter(LocalTime.class, new LocalTimeAdapter())
             .create();
 
-   @PostMapping("/toggleLike")
-   public ResponseEntity<String> toggleLike(@RequestBody Map<String, Object> request) {
-      int cs_no = (Integer) request.get("cs_no");  // 코스 번호
-      String action = (String) request.get("action");  // "like" 또는 "unlike"
-      log.info("toggleLike 요청 - cs_no: {}, action: {}", cs_no, action);
-      boolean success = courseService.toggleLike(cs_no, action);
-      return success 
-            ? ResponseEntity.ok("성공") 
-            : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("실패");
+//좋아요 눌렀었는지 확인하기
+   @PostMapping("csHasLiked")
+   public boolean hasLiked(@RequestBody Map<String, Object> lmap) {
+      log.info("csHasLiked호출 성공");
+      boolean result = false;
+      result = courseService.csHasLiked(lmap);
+      return result;
+   }
+   //좋아요가 눌렀었는지 확인해서 좋아요 취소/하기 (좋아요 버튼 누름)
+   @PostMapping("csToggleLike")
+   public String csToggleLike(@RequestBody Map<String, Object> lmap) {
+      log.info("csToggleLike 성공");
+      String result = "";
+      result = courseService.csToggleLike(lmap);
+      return result;
    }
             
 
@@ -121,14 +129,23 @@ public class CourseController {
 
       // ✅ 코스 삭제 (상세 정보도 같이 삭제)
    @DeleteMapping("delete")
-   public String deleteCourse(@RequestParam int cs_no) {
-         log.info("deleteCourse 호출 성공: " + cs_no);
+   public String deleteCourse(@RequestParam int cs_no, @AuthenticationPrincipal UserDetails userDetails) {
+      log.info("✅ 요청한 사용자 ID: {}", userDetails.getUsername());   
+      log.info("deleteCourse 호출 성공: " + cs_no);
          return String.valueOf(courseService.deleteCourse(cs_no));
    }
 
    // 👩‍💻 user_id로 코스찾기
    @GetMapping("getUserCourse")
-   public String getUsercourse(@RequestParam String user_id) {
+   /* public String getUsercourse(@RequestParam String user_id) {
+      log.info("getUsercourse 호출 성공:" + user_id);
+      List<Map<String,Object>> ulist = null;
+      ulist = courseService.getUsercourse(user_id);
+      String temp = gson.toJson(ulist);
+      return temp;
+   } */
+
+   public String getUsercourse(@RequestParam("user_id") String user_id) {
       log.info("getUsercourse 호출 성공:" + user_id);
       List<Map<String,Object>> ulist = null;
       ulist = courseService.getUsercourse(user_id);
@@ -138,7 +155,7 @@ public class CourseController {
 
    // 👨‍👩‍👧‍👦코스공유하기(저장된 코스 공유하기 클릭시 작동)
    @PutMapping("shareCourse")
-   public int shareCourse(@RequestParam int cs_no) {
+   public int shareCourse(@RequestParam int cs_no, @AuthenticationPrincipal UserDetails userDetails) {
       log.info("shareCourse 호출 성공"+ cs_no);
       int result = -1;
       result = courseService.shareCourse(cs_no);

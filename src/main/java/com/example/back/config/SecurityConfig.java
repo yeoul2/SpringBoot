@@ -70,10 +70,14 @@ public class SecurityConfig {
 						.requestMatchers("/oauth2/**").permitAll() // OAuth2 관련 경로 허용
 						.requestMatchers("/api/search/**").permitAll() // 검색 API 경로 허용
 						.requestMatchers("/api/places/**").permitAll() // Places API 경로 허용
-						.requestMatchers("/api/check").authenticated() // 🔥 인증된 사용자만 접근 가능
+						.requestMatchers("/api/check", "/api/user-info","/api/course/delete",
+						"/api/course/shareCourse","/api/board/tripboardInsert", "api/board/tripboardUpdate",
+						"/api/board/tripboardDelete", "/api/board/hasLiked", "/api/board/toggleLike", "/api/board/commentInsert",
+						"/api/board/commentUpdate", "/api/board/commentDelete", "/api/update-user", "/api/update-pw",
+						"/api/delete-info").authenticated() // 🔥 인증된 사용자만 접근 가능
 						//.requestMatchers("/api/**").authenticated() // JWT 인증 필요
-						.requestMatchers("/api/user-info").authenticated() // 마이페이지 JWT 인증 필요
 						.requestMatchers("/api/**").permitAll()
+						.requestMatchers("/api/course/**").permitAll()
 						.requestMatchers("/api/email-verification").permitAll() // ✅ 이메일 인증 API 허용
 						.requestMatchers("/oauth2/authorization/**").permitAll() // ✅ OAuth2 로그인 엔드포인트 허용
 						.requestMatchers("/oauth/naver/callback").permitAll() // 네이버 콜백 허용
