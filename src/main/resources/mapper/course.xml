@@ -4,16 +4,31 @@
 
 <mapper namespace="com.example.back.dao.CourseDao">
 
+      <!-- 유저가 해당 게시글에 좋아요를 눌렀는지 확인 -->
+   <select id="csHasLiked" resultType="boolean">
+      SELECT COUNT(*) > 0 FROM likes WHERE user_id = #{user_id} AND cs_no = #{cs_no};
+   </select>
+
+   <!-- 좋아요 데이터베이스 삭제 -->
+   <delete id="removeDeleteLikesTable" parameterType="map">
+      DELETE FROM likes WHERE user_id = #{user_id} AND cs_no = #{cs_no};
+   </delete>
+
    <!-- ✅ 좋아요 개수 증가 -->
-   <update id="addLikeCourse
-   " parameterType="int">
+   <update id="addLikeCourse" parameterType="int">
       UPDATE course 
       SET cs_like_count = cs_like_count + 1 
       WHERE cs_no = #{cs_no}
    </update>
 
+      <!-- likes 테이블에 데이터 추가 -->
+   <insert id="addLikesTable" parameterType="map">
+      INSERT INTO likes (user_id, cs_no)
+      VALUES (#{user_id}, #{cs_no});
+   </insert>
+
    <!-- ✅ 좋아요 개수 감소 (최소 0 유지) -->
-   <update id="removeLike" parameterType="int">
+   <update id="removeLikeCourse" parameterType="int">
       UPDATE course 
       SET cs_like_count = CASE 
          WHEN cs_like_count > 0 THEN cs_like_count - 1 
