@@ -1,39 +1,40 @@
-  package com.example.back.service;
+package com.example.back.service;
 
-  import com.example.back.model.TravelSchedule;
-  import org.springframework.beans.factory.annotation.Value;
-  import org.springframework.stereotype.Service;
-  import org.springframework.web.reactive.function.client.WebClient;
-  import reactor.core.publisher.Mono;
+import com.example.back.model.ScheduleRequest;
+import com.example.back.model.TravelSchedule;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.core.ParameterizedTypeReference;
+import reactor.core.publisher.Mono;
 
-  @Service
-  public class AIService {
+import java.util.List;
 
-    private final WebClient webClient;
+@Service
+@RequiredArgsConstructor
+public class AIService {
 
-    // AI 서버 URL을 application.properties 또는 application.yml에서 읽어오기
-    @Value("${ai.server.url}")
-    private String aiServerUrl;
+	private final WebClient.Builder webClientBuilder;
 
-    public AIService(WebClient.Builder webClientBuilder) {
-      // WebClient를 사용하여 AI 서버와 통신
-      this.webClient = webClientBuilder.baseUrl(aiServerUrl).build();
-    }
+	@Value("${ai.server.url}")
+	private String aiServerUrl;
 
-    // 여행 일정 생성 요청
-    public Mono<TravelSchedule> generateSchedule(String city, int days, int people, String style) {
-      // AI 서버로 전송할 JSON 데이터 생성
-      String requestJson = String.format("{\"city\": \"%s\", \"days\": %d, \"people\": %d, \"style\": \"%s\"}",
-          city, days, people, style);
+	public Mono<List<TravelSchedule>> generateSchedule(String city, int days, int people, String style) {
+		// 요청 DTO 생성
+		ScheduleRequest request = new ScheduleRequest(city, days, people, style);
 
-      // WebClient를 사용하여 비동기 POST 요청 보내기
-      return this.webClient.post()
-          .uri("/generate-schedule")  // AI 서버의 엔드포인트
-          .header("Content-Type", "application/json")
-          .bodyValue(requestJson)  // 요청 본문에 JSON 데이터 포함
-          .retrieve()  // 응답 받기
-          .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-              response -> Mono.error(new RuntimeException("AI 서버 응답 오류")))
-          .bodyToMono(TravelSchedule.class);  // 응답을 TravelSchedule DTO로 파싱
-    }
-  }
+		// WebClient 생성 후 FastAPI 호출
+		WebClient client = webClientBuilder.baseUrl(aiServerUrl).build();
+
+		return client.post()
+				.uri("/generate-schedule")
+				.header("Content-Type", "application/json")
+				.bodyValue(request)
+				.retrieve()
+				.onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+						response -> Mono.error(new RuntimeException("AI 서버 응답 오류")))
+				.bodyToMono(new ParameterizedTypeReference<List<TravelSchedule>>() {
+				});
+	}
+}
