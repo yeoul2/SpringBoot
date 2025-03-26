@@ -24,14 +24,37 @@ public class CourseDao {
       @Autowired
       private SqlSessionTemplate sqlSessionTemplate;
 
+      //유저의 좋아요 테이블에서 정보 추가
+      public int addLikesTable(Map<String, Object> lmap) {
+            log.info("addLikesTable 호출 성공");
+            int result = -1;
+            result = sqlSessionTemplate.insert("com.example.back.dao.CourseDao.addLikesTable", lmap);
+            return result;
+      }
+
+      //유저가 좋아요 누른 정보를 삭제
+      public int removeDeleteLikesTable(Map<String, Object> lmap) {
+            log.info("removeDeleteLikesTable 호출 성공");
+            int result = -1;
+            result = sqlSessionTemplate.delete("com.example.back.dao.CourseDao.removeDeleteLikesTable", lmap);
+            return result;
+      }
+
+      public boolean csHasLiked(Map<String, Object> lmap) {
+            log.info("csHasLiked 호출 성공");
+            boolean result = false;
+            result = sqlSessionTemplate.selectOne("com.example.back.dao.CourseDao.csHasLiked",lmap);
+            return result;
+      }
+
       // 좋아요 추가 (cs_like_count 증가)
-      public int addLike(int cs_no) {
-            return sqlSessionTemplate.update("com.example.back.dao.CourseDao.addLike", cs_no);
+      public int addLikeCourse(int cs_no) {
+            return sqlSessionTemplate.update("com.example.back.dao.CourseDao.addLikeCourse", cs_no);
       }
       
       // 좋아요 취소 (cs_like_count 감소, 0 이하 방지)
-      public int removeLike(int cs_no) {
-            return sqlSessionTemplate.update("com.example.back.dao.CourseDao.removeLike", cs_no);
+      public int removeLikeCourse(int cs_no) {
+            return sqlSessionTemplate.update("com.example.back.dao.CourseDao.removeLikeCourse", cs_no);
       }
       
       
@@ -106,4 +129,10 @@ public class CourseDao {
             result = sqlSessionTemplate.update("shareCourse",cs_no);
             return result;
       }
+
+
+
+
+
+
 }

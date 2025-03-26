@@ -35,15 +35,21 @@ public class CourseController {
             .registerTypeAdapter(LocalTime.class, new LocalTimeAdapter())
             .create();
 
-   @PostMapping("/toggleLike")
-   public ResponseEntity<String> toggleLike(@RequestBody Map<String, Object> request) {
-      int cs_no = (Integer) request.get("cs_no");  // 코스 번호
-      String action = (String) request.get("action");  // "like" 또는 "unlike"
-      log.info("toggleLike 요청 - cs_no: {}, action: {}", cs_no, action);
-      boolean success = courseService.toggleLike(cs_no, action);
-      return success 
-            ? ResponseEntity.ok("성공") 
-            : ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("실패");
+//좋아요 눌렀었는지 확인하기
+   @PostMapping("csHasLiked")
+   public boolean hasLiked(@RequestBody Map<String, Object> lmap) {
+      log.info("csHasLiked호출 성공");
+      boolean result = false;
+      result = courseService.csHasLiked(lmap);
+      return result;
+   }
+   //좋아요가 눌렀었는지 확인해서 좋아요 취소/하기 (좋아요 버튼 누름)
+   @PostMapping("csToggleLike")
+   public String csToggleLike(@RequestBody Map<String, Object> lmap) {
+      log.info("csToggleLike 성공");
+      String result = "";
+      result = courseService.csToggleLike(lmap);
+      return result;
    }
             
 

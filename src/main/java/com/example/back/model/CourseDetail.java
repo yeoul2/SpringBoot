@@ -4,8 +4,6 @@ import java.time.LocalTime;
 
 import lombok.Data;
 
-import java.time.LocalTime;
-
 @Data
 public class CourseDetail {
 	private LocalTime cdt_time;//코스디테일 시간

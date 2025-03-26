@@ -74,6 +74,7 @@ public class SecurityConfig {
 						//.requestMatchers("/api/**").authenticated() // JWT 인증 필요
 						.requestMatchers("/api/user-info").authenticated() // 마이페이지 JWT 인증 필요
 						.requestMatchers("/api/**").permitAll()
+						.requestMatchers("/api/course/**").permitAll()
 						.requestMatchers("/api/email-verification").permitAll() // ✅ 이메일 인증 API 허용
 						.requestMatchers("/oauth2/authorization/**").permitAll() // ✅ OAuth2 로그인 엔드포인트 허용
 						.requestMatchers("/oauth/naver/callback").permitAll() // 네이버 콜백 허용
