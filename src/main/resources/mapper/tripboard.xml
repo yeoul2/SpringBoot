@@ -87,7 +87,7 @@
     <insert id="tripboardInsert" parameterType="com.example.back.model.TripBoard" useGeneratedKeys="true" keyProperty="tb_no">
         INSERT INTO trip_board
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            user_id, tb_title, tb_country, tb_star, tb_review, tb_public, cs_no
+            user_id, tb_title, tb_country, tb_star, tb_review, tb_public<!-- , cs_no -->
             <if test="tb_departure_date != null"> ,tb_departure_date </if>
             <if test="tb_return_date != null"> ,tb_return_date </if>
             <if test="tb_city != null"> ,tb_city </if>
@@ -99,7 +99,7 @@
         </trim>
         VALUES
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            #{user_id},#{tb_title}, #{tb_country}, #{tb_star}, #{tb_review}, #{tb_public},#{cs_no}
+            #{user_id},#{tb_title}, #{tb_country}, #{tb_star}, #{tb_review}, #{tb_public}<!-- ,#{cs_no} -->
             <if test="tb_departure_date != null"> ,#{tb_departure_date} </if>
             <if test="tb_return_date != null"> ,#{tb_return_date} </if>
             <if test="tb_city != null"> ,#{tb_city} </if>
