@@ -13,10 +13,6 @@
 
     <!-- 사용자 이메일(user_email)로 찾기 --> 
     <select id="findByEmail" parameterType="java.lang.String" resultType="com.example.back.model.User">
-        <!-- SELECT user_no, user_name, user_email, user_id, user_pw, user_birth, role
-        FROM users
-        WHERE user_email = #{user_email}
-        LIMIT 1 -->
         SELECT * FROM users 
         WHERE user_email = #{user_email} 
         ORDER BY 
