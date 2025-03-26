@@ -36,6 +36,7 @@ public class TripBoardController {
       log.info("tripBoardCount 호출 성공");
       int result = -1;
       result = tripBoardService.tripboardCount(tmap);
+      log.info("총 게시글 갯수: "+result);
       return result;
    }
 

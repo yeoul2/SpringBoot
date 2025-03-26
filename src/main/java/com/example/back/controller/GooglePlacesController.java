@@ -203,13 +203,14 @@ public class GooglePlacesController {
 	@GetMapping("/recommend_route")
 	public Mono<String> getRecommendedRoute(@RequestParam String origin,
 	                                        @RequestParam String destination,
-	                                        @RequestParam(required = false) String waypoints) {
+	                                        @RequestParam(required = false) String waypoints,
+														@RequestParam(defaultValue = "transit") String mode) {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					var uri = uriBuilder.path("/directions/json")
 							.queryParam("origin", origin)
 							.queryParam("destination", destination)
-							.queryParam("mode", "driving")
+							.queryParam("mode", mode)
 							.queryParam("key", apiKey)
 							.queryParam("language", "ko");
 
@@ -227,7 +228,7 @@ public class GooglePlacesController {
 								.uri(uriBuilder -> uriBuilder.path("/directions/json")
 										.queryParam("origin", origin)
 										.queryParam("destination", destination)
-										.queryParam("mode", "transit")
+										.queryParam("mode", mode)
 										.queryParam("key", apiKey)
 										.queryParam("language", "ko")
 										.build())

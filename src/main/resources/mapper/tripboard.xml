@@ -6,7 +6,12 @@
     <select id="tripboardCount" resultType="int">
         SELECT COUNT(*)
         FROM trip_board
-        WHERE tb_public = 'Y'
+        WHERE (
+        tb_public = 'Y'
+        <if test="user_id != null and user_id != ''">
+            OR (tb_public = 'N' AND user_id = #{user_id})
+        </if>
+        )
         <if test="keyword != null and keyword != ''">
             AND (
             <choose>
@@ -35,7 +40,12 @@
     <select id="tripboardList" resultType="map">
         SELECT tb_no,tb_photo1, tb_title,tb_country,tb_up_date, tb_star, tb_like_count,user_id,cs_no
         FROM trip_board
-        WHERE tb_public = 'Y'
+        WHERE (
+        tb_public = 'Y'
+        <if test="user_id != null and user_id != ''">
+            OR (tb_public = 'N' AND user_id = #{user_id})
+        </if>
+        )
         <!-- 검색 기능 -->
         <if test="keyword != null and keyword != ''">
             AND (
@@ -83,11 +93,11 @@
     </select>
 
 
-    <!-- 게시글 추가 -->
+    <!-- 게시글 추가,등록 -->
     <insert id="tripboardInsert" parameterType="com.example.back.model.TripBoard" useGeneratedKeys="true" keyProperty="tb_no">
         INSERT INTO trip_board
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            user_id, tb_title, tb_country, tb_star, tb_review, tb_public<!-- , cs_no -->
+            user_id, tb_title, tb_country, tb_star, tb_review, tb_public
             <if test="tb_departure_date != null"> ,tb_departure_date </if>
             <if test="tb_return_date != null"> ,tb_return_date </if>
             <if test="tb_city != null"> ,tb_city </if>
@@ -96,10 +106,11 @@
             <if test="tb_photo3 != null"> ,tb_photo3 </if>
             <if test="tb_participants != null"> ,tb_participants </if>
             <if test="tb_theme != null"> ,tb_theme </if>
+            <if test="cs_no != null and cs_no !=0"> ,cs_no</if>
         </trim>
         VALUES
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            #{user_id},#{tb_title}, #{tb_country}, #{tb_star}, #{tb_review}, #{tb_public}<!-- ,#{cs_no} -->
+            #{user_id},#{tb_title}, #{tb_country}, #{tb_star}, #{tb_review}, #{tb_public}
             <if test="tb_departure_date != null"> ,#{tb_departure_date} </if>
             <if test="tb_return_date != null"> ,#{tb_return_date} </if>
             <if test="tb_city != null"> ,#{tb_city} </if>
@@ -108,6 +119,7 @@
             <if test="tb_photo3 != null"> ,#{tb_photo3} </if>
             <if test="tb_participants != null"> ,#{tb_participants} </if>
             <if test="tb_theme != null"> ,#{tb_theme} </if>
+            <if test="cs_no != null and cs_no !=0"> ,#{cs_no} </if>
         </trim>
     </insert>
 
@@ -129,6 +141,7 @@
             <if test="tb_photo3 != null"> ,tb_photo3 = #{tb_photo3} </if>
             <if test="tb_participants != null"> ,tb_participants = #{tb_participants} </if>
             <if test="tb_theme != null"> ,tb_theme = #{tb_theme} </if>
+            <if test="cs_no != null and cs_no !=0"> ,cs_no = #{cs_no} </if>
         </set>
         WHERE tb_no = #{tb_no, jdbcType=INTEGER}
     </update>
@@ -235,7 +248,7 @@
     <!--=========================[[ 보드디테일(코스) 처리 SQL ]] ========================-->
     <!-- 코스 조회(board_detail) -->
     <select id ="tripboardDetailList" parameterType="map" resultType="com.example.back.model.TripBoardDetail">
-        SELECT tbd_time,tbd_place_type,tbd_place,tbd_content,tbd_time_car,tbd_time_public,tbd_day
+        SELECT tbd_time,tbd_place_id,tbd_place_type,tbd_place,tbd_content,tbd_time_car,tbd_time_public,tbd_day
         FROM trip_board_detail
         WHERE tb_no = #{tb_no}
         ORDER BY tbd_no;
@@ -248,6 +261,7 @@
         <if test="tbd_time != null"> ,tbd_time </if>
         <if test="tbd_content != null"> ,tbd_content </if>
         <if test="tbd_place_type != null"> ,tbd_place_type </if>
+        <if test="tbd_place_id != null"> ,tbd_place_id </if>
         <if test="tbd_time_car != null"> ,tbd_time_car </if>
         <if test="tbd_time_public != null"> ,tbd_time_public </if>
         </trim>
@@ -257,6 +271,7 @@
         <if test="tbd_time != null"> ,#{tbd_time} </if>
         <if test="tbd_content != null"> ,#{tbd_content} </if>
         <if test="tbd_place_type != null"> ,#{tbd_place_type} </if>
+        <if test="tbd_place_id != null"> ,#{tbd_place_id} </if>
         <if test="tbd_time_car != null"> ,#{tbd_time_car} </if>
         <if test="tbd_time_public != null"> ,#{tbd_time_public} </if>
         </trim>
