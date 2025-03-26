@@ -42,7 +42,7 @@ public class GooglePlacesController {
 	 * 🔹 1. 자동완성 (Autocomplete) - 중복 예외 처리 제거
 	 */
 	@GetMapping("/autocomplete")
-	public Mono<ResponseEntity<List<Map<String, String>>>> getAutocomplete(@RequestParam String input) {
+	public Mono<ResponseEntity<List<Map<String, String>>>> getAutocomplete(@RequestParam(name = "input")String input) {
 		return webClient.get()
 				.uri(uriBuilder -> uriBuilder
 						.path("/place/autocomplete/json")
@@ -95,7 +95,7 @@ public class GooglePlacesController {
 	 * 🔹 3. 장소 상세 정보 조회 (Place Details)
 	 */
 	@GetMapping("/place_details")
-	public Mono<String> getPlaceDetails(@RequestParam String place_id) {
+	public Mono<String> getPlaceDetails(@RequestParam("place_id") String place_id) {
 		return webClient.get()
 				.uri(uriBuilder -> uriBuilder
 						.path("/place/details/json")
@@ -203,13 +203,14 @@ public class GooglePlacesController {
 	@GetMapping("/recommend_route")
 	public Mono<String> getRecommendedRoute(@RequestParam String origin,
 	                                        @RequestParam String destination,
-	                                        @RequestParam(required = false) String waypoints) {
+	                                        @RequestParam(required = false) String waypoints,
+														@RequestParam(defaultValue = "transit") String mode) {
 		return webClient.get()
 				.uri(uriBuilder -> {
 					var uri = uriBuilder.path("/directions/json")
 							.queryParam("origin", origin)
 							.queryParam("destination", destination)
-							.queryParam("mode", "driving")
+							.queryParam("mode", mode)
 							.queryParam("key", apiKey)
 							.queryParam("language", "ko");
 
@@ -227,7 +228,7 @@ public class GooglePlacesController {
 								.uri(uriBuilder -> uriBuilder.path("/directions/json")
 										.queryParam("origin", origin)
 										.queryParam("destination", destination)
-										.queryParam("mode", "transit")
+										.queryParam("mode", mode)
 										.queryParam("key", apiKey)
 										.queryParam("language", "ko")
 										.build())

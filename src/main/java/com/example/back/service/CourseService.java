@@ -19,18 +19,34 @@ public class CourseService {
     @Autowired
     private CourseDao courseDao;
 
-    @Transactional
-    public boolean toggleLike(int cs_no, String action) {
-        if ("like".equalsIgnoreCase(action)) {
-            log.info("좋아요 추가 실행 - cs_no: {}", cs_no);
-            return courseDao.addLike(cs_no) == 1;  // 좋아요 추가 (cs_like_count 증가)
-        } else if ("unlike".equalsIgnoreCase(action)) {
-            log.info("좋아요 취소 실행 - cs_no: {}", cs_no);
-            return courseDao.removeLike(cs_no) == 1;  // 좋아요 취소 (cs_like_count 감소)
-        }
-        return false;
-    }
     
+    public boolean csHasLiked(Map<String,Object> lmap) {//좋아요가 눌렸는지
+        boolean result = false;
+        result = courseDao.csHasLiked(lmap);
+        return result;
+    }
+
+    @Transactional
+    public String csToggleLike(Map<String,Object> lmap) {
+        boolean csHasLiked = courseDao.csHasLiked(lmap);//좋아요 눌렀었는지 확인하기^^
+        // T이면 이미 좋아요 눌러져있음, F이면 좋아요 눌러져있지 않음
+        int result1 = -1;
+        int result2 = -1;
+
+        if(csHasLiked) { // 이미 좋아요 눌려있는거임 -> 좋아요 취소시키기
+            result1 = courseDao.removeDeleteLikesTable(lmap);//좋아요 취소
+            result2 = courseDao.removeLikeCourse(Integer.parseInt((lmap.get("cs_no").toString())));//좋아요 수 감소
+        } else { // 이미 좋아요 안 눌려져 있는거임 -> 좋아요 하기
+            result1 = courseDao.addLikesTable(lmap);//좋아요하기
+            result2 = courseDao.addLikeCourse(Integer.parseInt(lmap.get("cs_no").toString()));//좋아요 수 증가
+        }
+        if(result1 !=1 || result2 !=1){
+            throw new RuntimeException("좋아요 처리 중 오류 발생");
+        }
+        return "성공";
+    }
+
+
 
     
     // ✅ 전체 코스 조회 (상세 정보 포함)
@@ -100,4 +116,9 @@ public class CourseService {
         result = courseDao.shareCourse(cs_no);
         return result;
     }
+
+
+
+
+
 }

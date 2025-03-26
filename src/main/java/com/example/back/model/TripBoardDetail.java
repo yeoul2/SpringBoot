@@ -9,9 +9,10 @@ public class TripBoardDetail {
    private LocalTime tbd_time;
    private String tbd_place_type;
    private String tbd_place;
+   private String tbd_place_id;
    private String tbd_content;
-   private int tbd_time_car;
-   private int tbd_time_public;
+   private String tbd_time_car;
+   private String tbd_time_public;
    private int tbd_day;
-   private int tbd_no; // 필요하면
+   private int tbd_no;
 }
