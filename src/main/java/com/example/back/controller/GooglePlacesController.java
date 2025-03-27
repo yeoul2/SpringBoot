@@ -4,19 +4,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.springframework.core.ParameterizedTypeReference;
 
@@ -30,6 +24,7 @@ public class GooglePlacesController {
   private String apiKey;
 
   public GooglePlacesController(WebClient.Builder webClientBuilder) {
+    // ✅ WebClient 기본 설정 (Google API 요청용)
     this.webClient = webClientBuilder
         .baseUrl("https://maps.googleapis.com/maps/api")
         .defaultHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
@@ -39,7 +34,11 @@ public class GooglePlacesController {
   }
 
   /**
-   * 🔹 1. 자동완성 (Autocomplete) - 중복 예외 처리 제거
+   * 🔹 1. 자동완성 검색
+   * 사용자의 입력어(input)를 기반으로 장소 자동완성 목록을 반환
+   *
+   * @param input 사용자 입력 문자열
+   * @return 장소 설명(description)과 place_id 리스트 반환
    */
   @GetMapping("/autocomplete")
   public Mono<ResponseEntity<List<Map<String, String>>>> getAutocomplete(@RequestParam(name = "input") String input) {
@@ -69,9 +68,14 @@ public class GooglePlacesController {
         .onErrorResume(e -> Mono.just(ResponseEntity.status(500).body(List.of())));
   }
 
-
   /**
-   * 🔹 2. 장소 검색 (Nearby Search) - 'type' 기본값 추가
+   * 🔹 2. 장소 검색 (Nearby Search)
+   * 특정 위치 주변에서 지정된 타입의 장소를 검색
+   *
+   * @param location 위도,경도 문자열 (예: "37.5665,126.9780")
+   * @param radius   반경 (미터 단위)
+   * @param type     검색할 장소 유형 (기본: 관광지)
+   * @return Google Places Nearby Search 결과
    */
   @GetMapping("/nearby_search")
   public Mono<String> getNearbySearch(@RequestParam String location,
@@ -90,9 +94,12 @@ public class GooglePlacesController {
         .bodyToMono(String.class);
   }
 
-
   /**
-   * 🔹 3. 장소 상세 정보 조회 (Place Details)
+   * 🔹 3. 장소 상세 정보 조회
+   * place_id를 기반으로 해당 장소의 상세 정보 반환
+   *
+   * @param place_id Google에서 제공하는 장소 ID
+   * @return 상세 정보 JSON 문자열
    */
   @GetMapping("/place_details")
   public Mono<String> getPlaceDetails(@RequestParam("place_id") String place_id) {
@@ -108,11 +115,17 @@ public class GooglePlacesController {
   }
 
   /**
-   * 🔹 4. 장소 사진 조회 (Place Photos) - photo_reference 캐싱 최적화
+   * 🔹 4. 장소 사진 조회
+   * place_id를 기준으로 사진을 조회하여 byte[]로 반환
+   *
+   * @param place_id 장소 ID
+   * @param maxWidth 이미지 최대 너비 (기본값: 400)
+   * @return 이미지 바이너리 데이터를 포함한 ResponseEntity
    */
   @GetMapping("/place_photo")
   public Mono<ResponseEntity<byte[]>> getPlacePhoto(@RequestParam String place_id,
                                                     @RequestParam(defaultValue = "400") int maxWidth) {
+    // ✅ Step 1: 사진 정보 조회 (photo_reference 얻기)
     String detailsUrl = String.format(
         "https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=photos&key=%s",
         URLEncoder.encode(place_id, StandardCharsets.UTF_8), apiKey);
@@ -146,6 +159,7 @@ public class GooglePlacesController {
             return Mono.just(ResponseEntity.badRequest().body("❌ 유효하지 않은 photo_reference 입니다.".getBytes()));
           }
 
+          // ✅ Step 2: photo_reference로 이미지 요청
           String photoUrl = String.format(
               "https://maps.googleapis.com/maps/api/place/photo?maxwidth=%d&photo_reference=%s&key=%s",
               maxWidth, URLEncoder.encode(photoReference, StandardCharsets.UTF_8), apiKey);
@@ -164,9 +178,11 @@ public class GooglePlacesController {
         });
   }
 
-
   /**
    * 🔹 5. 주소 → 좌표 변환 (Geocoding)
+   *
+   * @param address 실제 주소 문자열
+   * @return 위도/경도 정보 포함한 JSON 문자열
    */
   @GetMapping("/geocode")
   public Mono<String> getGeocode(@RequestParam String address) {
@@ -183,6 +199,9 @@ public class GooglePlacesController {
 
   /**
    * 🔹 6. 좌표 → 주소 변환 (Reverse Geocoding)
+   *
+   * @param latlng "위도,경도" 형식의 좌표 문자열
+   * @return 해당 좌표의 주소 정보
    */
   @GetMapping("/reverse_geocode")
   public Mono<String> getReverseGeocode(@RequestParam String latlng) {
@@ -199,6 +218,13 @@ public class GooglePlacesController {
 
   /**
    * 🔹 7. 추천된 여행 코스 (Google Directions API)
+   * 장소명 기반으로 경유지를 포함한 경로 추천 요청
+   *
+   * @param origin      출발지 (장소명, 예: "서울")
+   * @param destination 도착지 (장소명, 예: "부산")
+   * @param waypoints   경유지 목록 (예: "대전|대구"), 선택 사항
+   * @param mode        이동 수단 (기본값 "transit")
+   * @return Directions API 응답(JSON)
    */
   @GetMapping("/recommend_route")
   public Mono<String> getRecommendedRoute(@RequestParam String origin,
@@ -223,6 +249,7 @@ public class GooglePlacesController {
         .retrieve()
         .bodyToMono(String.class)
         .flatMap(response -> {
+          // ❗경로가 없을 경우 경유지 없이 재시도
           if (response.contains("\"status\" : \"ZERO_RESULTS\"")) {
             return webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/directions/json")
@@ -239,6 +266,15 @@ public class GooglePlacesController {
         });
   }
 
+  /**
+   * 🔹 8. 정확한 좌표 기반 실제 경로 요청
+   * 지도에 라인으로 표시할 수 있는 경로 정보 반환
+   *
+   * @param origin      출발 좌표 (예: "37.5665,126.9780")
+   * @param destination 도착 좌표 (예: "35.1796,129.0756")
+   * @param mode        이동 수단 (기본값 "transit")
+   * @return Directions API 응답(JSON)
+   */
   @GetMapping("/route")
   public Mono<String> getRouteBetweenPoints(@RequestParam String origin,
                                             @RequestParam String destination,
